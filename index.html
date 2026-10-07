@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Juego para aprender las provincias y capitales de la República Argentina en el mapa.">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+.credits{font:600 .75rem system-ui,sans-serif;color:#7a8a99;text-align:center;padding:4px 16px 16px}
+</style>
+<title>Mapa de Provincias Argentinas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: atlas escolar — mapa alto a la izquierda, tarjeta de pregunta a la derecha (arriba y fija en celular) */
+:root{
+  --bg:#eef4f9; --panel:#ffffff; --sea:#d6e8f4; --ink:#1d2b3a; --muted:#5b6d80; --line:#ffffff;
+  --accent:#2f86c9; --accent-ink:#ffffff; --sun:#f2b230;
+  --ok:#2fa865; --bad:#e0503f; --soft:#e3edf5; --slot:#f7fafc; --slotline:#b4c6d6;
+  --noa:#f2c3a0; --nea:#a9d99e; --cuyo:#d8bce6; --pam:#f4df96; --pat:#a8d0ea; --land:#efe3c2;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1923; --panel:#172431; --sea:#132a3c; --ink:#e8eef4; --muted:#9db0c2; --line:#0f1923;
+  --accent:#5aaee8; --accent-ink:#0b1620; --sun:#f5c04e; --ok:#3cc37a; --bad:#ef6a5a; --soft:#203243; --slot:#1c2d3d; --slotline:#3a556c;
+  --noa:#8c5f42; --nea:#467c44; --cuyo:#715383; --pam:#857536; --pat:#3d6d8c; --land:#6b6450; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1923; --panel:#172431; --sea:#132a3c; --ink:#e8eef4; --muted:#9db0c2; --line:#0f1923;
+  --accent:#5aaee8; --accent-ink:#0b1620; --sun:#f5c04e; --ok:#3cc37a; --bad:#ef6a5a; --soft:#203243; --slot:#1c2d3d; --slotline:#3a556c;
+  --noa:#8c5f42; --nea:#467c44; --cuyo:#715383; --pam:#857536; --pat:#3d6d8c; --land:#6b6450; color-scheme:dark}
+
+html,body{height:100%}
+@media (pointer:coarse){html,body{touch-action:pan-x pan-y}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:14px 28px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tools{display:flex;gap:8px;position:relative}
+h1{font-family:var(--display);font-weight:800;font-size:1.7rem;line-height:1;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+header{position:relative}
+.snd{width:42px;height:42px;border-radius:999px;border:2px solid var(--soft);background:var(--panel);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.snd .mute{display:none}.snd[aria-pressed="false"] .mute{display:inline}.snd[aria-pressed="false"] .wave{display:none}
+.snd[aria-pressed="false"]{color:var(--muted)}
+.snd[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
+.modes button{font:800 1.08rem var(--display);padding:9px 10px;border-radius:14px}
+.variant{padding:10px}
+.endKind{display:flex;flex-direction:column;gap:12px;padding-block:4px 6px}
+.endBtns{display:flex;flex-direction:column;gap:8px}
+.variant .seg button{padding:7px 6px;font-size:.88rem}
+.sub button{font:700 .9rem var(--body);background:transparent;color:var(--muted);border:2px solid transparent;border-radius:999px;padding:6px 12px;cursor:pointer}
+.sub button:hover{color:var(--ink)}
+.sub button[aria-pressed="true"]{color:var(--ink);background:var(--panel);border-color:var(--accent)}
+.pop{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:min(300px, calc(100vw - 32px));background:var(--panel);border:2px solid var(--soft);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:12px}
+.pop .row2{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+.pop select{font:700 .95rem var(--body);padding:5px 8px;border-radius:8px;border:2px solid var(--soft);background:var(--panel);color:var(--ink)}
+.pop input[type="checkbox"]{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.modes button,.seg button{font:700 .92rem var(--body);border:2px solid var(--soft);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer}
+.modes button[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+.game{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.map{background:var(--sea);border-radius:18px;padding:12px;display:flex;justify-content:center;min-width:0;position:relative}
+.map svg{width:100%;height:auto;max-height:84vh;display:block}
+.prov{stroke:var(--line);stroke-width:calc(14 * var(--k,1));stroke-linejoin:round;cursor:pointer;transition:fill .2s}
+.r-NOA{fill:var(--noa)} .r-NEA{fill:var(--nea)} .r-Cuyo{fill:var(--cuyo)} .r-Pampeana{fill:var(--pam)} .r-Patagonia{fill:var(--pat)}
+.no-regions .prov,.no-regions .piece path,.no-regions .piece circle,.no-regions #ghost path,.no-regions #ghost circle{fill:var(--land)}
+.prov:hover{filter:brightness(.92)}
+.prov.sel{stroke:var(--ink);stroke-width:calc(26 * var(--k,1))}
+.prov.target{fill:var(--sun);stroke:var(--ink);stroke-width:calc(26 * var(--k,1));animation:pulse 1.1s ease-in-out infinite}
+.prov.slot{fill:var(--slot);stroke:var(--slotline);stroke-width:calc(12 * var(--k,1))}
+.prov.slot.hover{fill:var(--sun)}
+.prov.ok{fill:var(--ok)} .prov.bad{fill:var(--bad)}
+.prov.reveal{fill:var(--ok);stroke:var(--ink);stroke-width:calc(26 * var(--k,1));animation:pulse 1.1s ease-in-out infinite}
+.caba{stroke:var(--ink);stroke-width:calc(12 * var(--k,1))}
+.isl{font:800 150px var(--body);fill:var(--muted);text-anchor:middle;pointer-events:none}
+.mode-rain .isl{display:none}
+.cap{fill:var(--ink);stroke:var(--line);stroke-width:calc(14 * var(--k,1));pointer-events:none}
+.capwrap .cap{display:none} .capwrap.all .cap,.cap.show{display:block}
+@keyframes pulse{50%{opacity:.6}}
+@media (prefers-reduced-motion:reduce){.prov.target,.prov.reveal{animation:none}}
+
+.panel{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 10px)}
+.card{background:var(--panel);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 0 var(--soft)}
+.status{display:flex;justify-content:space-between;font-weight:800;color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--soft);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.ask{color:var(--muted);font-weight:700;font-size:.95rem;margin:0}
+.big{font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1.05;margin:0;text-wrap:balance;min-height:1.05em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opts button{font:700 .98rem var(--body);text-align:left;padding:11px 12px;border-radius:12px;border:2px solid var(--soft);background:var(--panel);color:var(--ink);cursor:pointer;min-height:52px}
+.opts button:hover:not(:disabled){border-color:var(--accent)}
+.opts button.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.opts button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.opts button:disabled{cursor:default}
+.fb{font-weight:700;margin:0;min-height:1.4em}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.primary{font:800 1.05rem var(--body);background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:12px;cursor:pointer}
+.ghost{font:700 .95rem var(--body);background:transparent;color:var(--ink);border:2px solid var(--soft);border-radius:12px;padding:10px;cursor:pointer}
+.row{display:flex;flex-wrap:wrap;gap:8px}.row>*{flex:1 1 auto}
+.settings{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:.9rem;color:var(--muted);font-weight:700}
+.settings select{font:700 .9rem var(--body);padding:5px 8px;border-radius:8px;border:2px solid var(--soft);background:var(--panel);color:var(--ink)}
+.settings label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.stars{font-size:2.4rem;letter-spacing:.1em;color:var(--sun);line-height:1;margin:0}
+.stars .off{color:var(--soft)}
+.errs{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+.errs li{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:8px;background:var(--soft);font-size:.92rem}
+.errs b{font-weight:800}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+#svg.zoomed{touch-action:none;cursor:grab}
+.maplegend{position:absolute;right:10px;bottom:10px;flex-direction:column;gap:4px;background:var(--panel);padding:8px 10px;border-radius:12px;pointer-events:none;z-index:1}
+.no-regions .maplegend,.mode-rain .maplegend{display:none}
+.best{font-size:.85rem;color:var(--muted);font-weight:700;margin:0}
+.seg{display:flex;gap:6px}.seg button{flex:1}
+.seg button:disabled{opacity:.55;cursor:default}
+.rainlayer{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:18px}
+.drop{position:absolute;left:0;top:0;max-width:70%;text-align:center;font:800 1.1rem/1.1 var(--display);background:var(--accent);color:var(--accent-ink);border:3px solid var(--panel);border-radius:12px;padding:7px 11px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.drop.low{background:var(--bad);color:#fff}
+.drop.pop{animation:pop .3s forwards}
+.drop.lost{background:var(--bad);border-color:var(--bad);color:#fff;animation:fade .9s .3s forwards}
+@keyframes pop{to{opacity:0;scale:1.5}}
+@keyframes fade{to{opacity:0}}
+.hud{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;z-index:2}
+.hud span{font:800 1.15rem var(--display);background:var(--panel);color:var(--ink);padding:2px 12px;border-radius:999px;font-variant-numeric:tabular-nums}
+.hud .hearts{color:var(--bad);letter-spacing:.08em}
+.plus{position:absolute;left:0;top:0;font:800 1.4rem var(--display);color:var(--ok);pointer-events:none;animation:rise .9s ease-out forwards;text-shadow:0 1px 0 var(--panel)}
+@keyframes rise{to{opacity:0;translate:0 -50px}}
+.board{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:pos}
+.board li{display:grid;grid-template-columns:1.6em 1fr auto;align-items:baseline;gap:8px;padding:7px 10px;border-radius:10px;background:var(--soft);font-variant-numeric:tabular-nums}
+.board li::before{counter-increment:pos;content:counter(pos);font:800 1.05rem var(--display);color:var(--accent)}
+.board li:first-child::before{color:var(--sun)}
+.board li.empty::before{content:none}
+.board .nm{font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .pt{font-weight:800}
+.board small{display:block;font-weight:600;color:var(--muted);font-size:.78rem}
+.board li.me{outline:3px solid var(--sun)}
+.saveRow{display:flex;gap:8px}
+.saveRow input{flex:1;min-width:0;font:700 1rem var(--body);padding:10px;border-radius:10px;border:2px solid var(--soft);background:var(--panel);color:var(--ink)}
+.title2{font-family:var(--display);font-weight:800;font-size:1.2rem;margin:0}
+.tray{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px}
+.piece{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:2px solid var(--soft);border-radius:12px;background:var(--panel);color:var(--ink);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;font:inherit}
+.piece svg{width:52px;height:52px;pointer-events:none}
+.piece span{font-size:.72rem;font-weight:800;text-align:center;line-height:1.1;pointer-events:none}
+.piece.sel{border-color:var(--accent);background:var(--soft)}
+.piece path,.piece circle,#ghost path,#ghost circle{stroke:var(--ink);stroke-width:14}
+#ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:50;opacity:.9;overflow:visible}
+@media (min-width:761px){.tray{max-height:46vh;overflow:auto}}
+
+@media (max-width:760px){
+  .wrap{gap:10px;padding-block:10px 20px}
+  h1{font-size:1.3rem;white-space:nowrap}
+  .snd{width:38px;height:38px}
+  .modes button{padding:7px 6px;font-size:1rem}
+  .game{grid-template-columns:minmax(0,1fr);gap:10px}
+  .panel,.panel .card{min-width:0}
+  /* la pregunta queda fija arriba y el mapa pasa por debajo */
+  .panel{order:-1;z-index:5;gap:8px;top:env(safe-area-inset-top,0px);background:var(--bg);margin-inline:-16px;padding:6px 16px 8px}
+  .card{padding:10px 12px;gap:6px;border-radius:14px}
+  .variant{padding:6px}
+  .variant .seg button{padding:6px 4px}
+  #settings{display:none}
+  .ask{font-size:.86rem}
+  .big{font-size:1.35rem}
+  .status{font-size:.8rem}
+  .fb{font-size:.9rem;min-height:0}
+  .primary{padding:10px}
+  .opts button{min-height:44px;padding:8px 10px;font-size:.92rem}
+  .map{padding:8px;border-radius:14px}
+  .map svg{max-height:calc(100svh - 120px)}
+  .maplegend{font-size:.7rem;padding:6px 8px;right:6px;bottom:6px}
+  /* rompecabezas: piezas en una tira que se desliza de costado; se arrastran hacia abajo */
+  .tray{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .piece{flex:none;width:72px;touch-action:pan-x}
+  .piece svg{width:44px;height:44px}
+  /* pantalla final y lluvia en juego: sin panel fijo */
+  .ended .panel{position:static}
+  .raining .panel{display:none}
+  .raining .map svg{max-height:calc(100svh - 110px)}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1>Provincias <span>y Capitales</span></h1>
+      <div class="tools">
+        <button class="snd" id="snd" aria-pressed="true" aria-label="Sonido" title="Sonido"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="mute" d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="snd" id="gear" aria-expanded="false" aria-controls="setPop" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+        <div class="pop" id="setPop" hidden role="dialog" aria-label="Ajustes">
+          <p class="title2">Ajustes</p>
+          <label class="row2" for="len">Preguntas por vuelta
+            <select id="len"><option value="10">10</option><option value="all">Todas</option></select>
+          </label>
+          <label class="row2" for="caba">Incluir Ciudad de Buenos Aires <input type="checkbox" id="caba" checked></label>
+          <label class="row2" for="regions">Mostrar regiones (NOA, NEA, Cuyo…) <input type="checkbox" id="regions" checked></label>
+          <label class="row2" for="music">Música en Jugar <input type="checkbox" id="music" checked></label>
+          <p class="best">Las preguntas por vuelta se usan en Practicar. El parlante de al lado apaga todos los sonidos.</p>
+        </div>
+      </div>
+    </div>
+    <nav class="modes" id="modes">
+      <button data-g="aprender" aria-pressed="false">Aprender</button>
+      <button data-g="practicar" aria-pressed="false">Practicar</button>
+      <button data-g="jugar" aria-pressed="false">Jugar</button>
+    </nav>
+  </header>
+
+  <div class="game">
+    <div class="map"><svg id="svg" role="img" aria-label="Mapa de la República Argentina dividido en provincias"></svg>
+      <div class="hud" id="hud" hidden><span id="hudScore">0</span><span class="hearts" id="hudLives">♥♥♥</span></div>
+      <div class="rainlayer" id="layer"></div>
+      <div class="legend maplegend" id="legend" aria-hidden="true">
+          <span><i style="background:var(--noa)"></i>NOA</span>
+          <span><i style="background:var(--nea)"></i>NEA</span>
+          <span><i style="background:var(--cuyo)"></i>Cuyo</span>
+          <span><i style="background:var(--pam)"></i>Pampeana</span>
+          <span><i style="background:var(--pat)"></i>Patagonia</span>
+        </div>
+    </div>
+
+    <aside class="panel">
+      <div class="card variant" id="variant" hidden><div class="seg" id="varSeg"></div></div>
+      <section class="card main" id="play">
+        <div class="status"><span id="count">Pregunta 1 de 10</span><span id="score">Aciertos: 0</span></div>
+        <div class="bar"><i id="prog"></i></div>
+        <p class="ask" id="ask"></p>
+        <p class="big" id="big"></p>
+        <div class="opts" id="opts" hidden></div>
+        <p class="fb" id="fb" aria-live="polite"></p>
+        <button class="primary" id="next" hidden>Siguiente</button>
+      </section>
+
+      <section class="card main" id="puzzle" hidden>
+        <div class="status"><span id="pzCount">Colocadas 0 de 24</span><span id="pzTime">0:00</span></div>
+        <div class="bar"><i id="pzProg"></i></div>
+        <p class="ask">Arrastrá cada pieza a su lugar en el mapa. También podés tocar una pieza y después tocar dónde va.</p>
+        <p class="fb" id="pzFb" aria-live="polite"></p>
+        <div class="tray" id="tray"></div>
+      </section>
+
+      <section class="card" id="rain" hidden>
+        <p class="ask">Van a caer nombres sobre el mapa. Tocá dónde va cada uno antes de que llegue abajo. Si tocás una provincia equivocada o un nombre llega al piso, perdés una vida.</p>
+        <div class="seg" id="rnKind">
+          <button data-k="prov" aria-pressed="true">Caen provincias</button>
+          <button data-k="cap" aria-pressed="false">Caen capitales</button>
+        </div>
+        <div class="status"><span id="rnScore">Puntos: 0</span><span id="rnLevel">Nivel 1</span><span id="rnStreak">Racha: 0</span></div>
+        <p class="fb" id="rnFb" aria-live="polite"></p>
+        <div class="row"><button class="primary" id="rnStart">Empezar</button></div>
+        <p class="best" id="rnBest"></p>
+      </section>
+
+      <section class="card main" id="study" hidden>
+        <p class="ask">Tocá una provincia para ver su capital</p>
+        <p class="big" id="sName" hidden></p>
+        <p class="fb" id="sCap"></p>
+        <p class="best" id="sReg"></p>
+      </section>
+
+      <section class="card main" id="end" hidden>
+        <p class="ask">Terminaste la vuelta</p>
+        <p class="stars" id="stars"></p>
+        <p class="big" id="final"></p>
+        <p class="best" id="bestTxt"></p>
+        <div id="saveBox" hidden>
+          <p class="ask">¡Entraste en la tabla de récords! Escribí tu nombre:</p>
+          <form class="saveRow" id="saveForm"><input id="rnName" maxlength="16" autocomplete="off" placeholder="Tu nombre"><button class="primary" type="submit">Guardar</button></form>
+        </div>
+        <p class="ask" id="errTitle">Para repasar:</p>
+        <ul class="errs" id="errs"></ul>
+        <div class="endKind" id="endKindBox" hidden>
+          <p class="ask">¿Qué querés que caiga en la próxima?</p>
+          <div class="seg" id="endKind">
+            <button data-k="prov" aria-pressed="true">Caen provincias</button>
+            <button data-k="cap" aria-pressed="false">Caen capitales</button>
+          </div>
+        </div>
+        <div class="endBtns">
+          <button class="primary" id="again">Jugar otra vez</button>
+          <button class="ghost" id="review">Repasar errores</button>
+        </div>
+      </section>
+
+      <section class="card" id="board" hidden>
+        <p class="title2" id="boardTitle">Mejores puntajes</p>
+        <ol class="board" id="boardList"></ol>
+        <p class="best">Los récords se guardan en este dispositivo.</p>
+      </section>
+
+      <section class="card" id="settings">
+        <button class="ghost" id="restart">Empezar de nuevo</button>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+const DATA = {"viewBox": [-999, -9851, 5252, 10850], "provincias": [{"id": "ar-jy", "nombre": "Jujuy", "capital": "San Salvador de Jujuy", "region": "NOA", "d": "M239,-9218L309,-9457L254,-9514L301,-9569L302,-9612L377,-9644L391,-9710L500,-9742L524,-9767L541,-9851L585,-9838L600,-9810L635,-9802L692,-9746L742,-9755L860,-9751L844,-9677L812,-9592L835,-9578L835,-9508L857,-9464L904,-9456L902,-9375L926,-9360L951,-9298L1017,-9308L1083,-9254L1110,-9291L1158,-9288L1164,-9069L1116,-8995L1060,-8974L1023,-8931L967,-8982L941,-8938L902,-8948L860,-8984L830,-8969L737,-9001L686,-9082L686,-9108L614,-9152L607,-9205L618,-9281L563,-9321L508,-9338L493,-9277L513,-9222L509,-9119L464,-9055L413,-9067L358,-9112L287,-9188L239,-9218Z", "cx": 823, "cy": -9070, "lx": 600, "ly": -9416, "trampas": ["Humahuaca", "Tilcara", "Palpalá"]}, {"id": "ar-sa", "nombre": "Salta", "capital": "Salta", "region": "NOA", "d": "M598,-8399L548,-8426L509,-8362L491,-8359L458,-8397L432,-8450L384,-8515L376,-8570L397,-8587L463,-8601L476,-8651L451,-8716L436,-8719L79,-8711L-126,-8748L-91,-8756L-122,-8833L-151,-8875L-131,-8927L-55,-9002L207,-9121L239,-9218L287,-9188L358,-9112L413,-9067L464,-9055L509,-9119L513,-9222L493,-9277L508,-9338L563,-9321L618,-9281L607,-9205L614,-9152L686,-9108L686,-9082L737,-9001L830,-8969L860,-8984L902,-8948L941,-8938L967,-8982L1023,-8931L1060,-8974L1116,-8995L1164,-9069L1158,-9288L1110,-9291L1083,-9254L1017,-9308L951,-9298L926,-9360L902,-9375L904,-9456L857,-9464L835,-9508L835,-9578L812,-9592L844,-9677L860,-9751L911,-9751L1042,-9712L1046,-9670L1089,-9605L1081,-9572L1107,-9543L1114,-9500L1143,-9604L1171,-9637L1237,-9777L1300,-9762L1331,-9779L1584,-9772L1588,-9736L1639,-9689L1634,-9676L1721,-9616L1713,-9263L1708,-9079L1707,-8987L1382,-8585L1227,-8590L1142,-8607L1077,-8470L1059,-8407L976,-8411L918,-8393L829,-8428L816,-8456L778,-8442L713,-8457L699,-8385L598,-8399Z", "cx": 789, "cy": -8875, "lx": 1436, "ly": -9074, "trampas": ["Cafayate", "Orán", "Tartagal"]}, {"id": "ar-tm", "nombre": "Tucumán", "capital": "San Miguel de Tucumán", "region": "NOA", "d": "M855,-7859L807,-7874L758,-7841L742,-7812L711,-7848L701,-7888L666,-7894L635,-7943L619,-8028L558,-8052L651,-8183L657,-8246L569,-8320L598,-8399L699,-8385L713,-8457L778,-8442L816,-8456L829,-8428L918,-8393L976,-8411L1059,-8407L1047,-8334L1051,-8257L1027,-8255L1000,-8213L985,-8158L940,-8054L886,-8001L913,-7987L884,-7952L904,-7901L884,-7866L855,-7859Z", "cx": 842, "cy": -8214, "lx": 779, "ly": -8106, "trampas": ["Tafí del Valle", "Concepción", "Yerba Buena"]}, {"id": "ar-ct", "nombre": "Catamarca", "capital": "San Fernando del Valle de Catamarca", "region": "NOA", "d": "M932,-7322L910,-7305L914,-7217L858,-7158L784,-7133L737,-7230L691,-7341L673,-7423L579,-7514L518,-7545L517,-7591L478,-7630L446,-7698L333,-7742L298,-7718L251,-7712L123,-7716L89,-7702L63,-7743L56,-7786L12,-7775L-93,-7830L-91,-7906L-211,-7888L-294,-7893L-261,-7999L-238,-8017L-202,-8110L-139,-8095L-120,-8124L-65,-8135L-63,-8192L-139,-8295L-142,-8375L-97,-8417L-123,-8554L-141,-8584L-156,-8657L-126,-8748L79,-8711L436,-8719L451,-8716L476,-8651L463,-8601L397,-8587L376,-8570L384,-8515L432,-8450L458,-8397L491,-8359L509,-8362L548,-8426L598,-8399L569,-8320L657,-8246L651,-8183L558,-8052L619,-8028L635,-7943L666,-7894L701,-7888L711,-7848L742,-7812L758,-7841L807,-7874L855,-7859L880,-7740L879,-7673L850,-7619L872,-7603L890,-7408L932,-7322Z", "cx": 677, "cy": -7677, "lx": 181, "ly": -7924, "trampas": ["Belén", "Andalgalá", "Tinogasta"]}, {"id": "ar-lr", "nombre": "La Rioja", "capital": "La Rioja", "region": "NOA", "d": "M681,-6565L599,-6569L554,-6552L447,-6555L411,-6567L382,-6607L373,-6648L321,-6681L305,-6736L317,-6825L300,-6849L311,-6883L281,-6941L172,-7052L152,-7095L68,-7162L18,-7216L-48,-7272L-155,-7300L-233,-7287L-245,-7329L-226,-7395L-244,-7455L-223,-7498L-276,-7565L-295,-7616L-346,-7659L-438,-7684L-373,-7747L-341,-7818L-304,-7843L-294,-7893L-211,-7888L-91,-7906L-93,-7830L12,-7775L56,-7786L63,-7743L89,-7702L123,-7716L251,-7712L298,-7718L333,-7742L446,-7698L478,-7630L517,-7591L518,-7545L579,-7514L673,-7423L691,-7341L737,-7230L784,-7133L749,-7047L679,-6822L681,-6565Z", "cx": 369, "cy": -7370, "lx": 375, "ly": -7223, "trampas": ["Chilecito", "Chamical", "Aimogasta"]}, {"id": "ar-se", "nombre": "Santiago del Estero", "capital": "Santiago del Estero", "region": "NOA", "d": "M932,-7322L890,-7408L872,-7603L850,-7619L879,-7673L880,-7740L855,-7859L884,-7866L904,-7901L884,-7952L913,-7987L886,-8001L940,-8054L985,-8158L1000,-8213L1027,-8255L1051,-8257L1047,-8334L1059,-8407L1077,-8470L1142,-8607L1227,-8590L1382,-8585L1868,-8572L1876,-8544L1874,-8376L1855,-7808L1800,-7511L1722,-7109L1682,-7225L1669,-7235L1364,-7244L1336,-7283L1238,-7287L1170,-7329L1168,-7347L1101,-7363L932,-7322Z", "cx": 1118, "cy": -7892, "lx": 1358, "ly": -7834, "trampas": ["Termas de Río Hondo", "La Banda", "Añatuya"]}, {"id": "ar-fm", "nombre": "Formosa", "capital": "Formosa", "region": "NEA", "d": "M1708,-9079L1713,-9263L1721,-9616L1753,-9588L1771,-9535L1833,-9430L1866,-9409L1895,-9363L1936,-9344L1969,-9302L2027,-9278L2082,-9235L2111,-9170L2161,-9146L2233,-9132L2238,-9120L2312,-9093L2400,-9092L2567,-8970L2601,-8926L2700,-8870L2755,-8823L2854,-8793L2899,-8744L2927,-8760L2996,-8712L3024,-8709L3062,-8673L3115,-8578L3092,-8528L3052,-8512L3035,-8461L3001,-8418L3010,-8403L2944,-8369L2917,-8324L2884,-8165L2851,-8125L2789,-8194L2708,-8259L2683,-8293L2628,-8331L2587,-8317L2558,-8337L2552,-8370L2477,-8398L2478,-8432L2425,-8497L2376,-8539L2334,-8553L2284,-8654L2245,-8706L2204,-8721L2072,-8821L2059,-8871L2025,-8898L1969,-8909L1935,-8952L1908,-8957L1875,-9002L1837,-9011L1794,-9048L1708,-9079Z", "cx": 2916, "cy": -8353, "lx": 2379, "ly": -8870, "trampas": ["Clorinda", "Pirané", "Las Lomitas"]}, {"id": "ar-cc", "nombre": "Chaco", "capital": "Resistencia", "region": "NEA", "d": "M1382,-8585L1707,-8987L1708,-9079L1794,-9048L1837,-9011L1875,-9002L1908,-8957L1935,-8952L1969,-8909L2025,-8898L2059,-8871L2072,-8821L2204,-8721L2245,-8706L2284,-8654L2334,-8553L2376,-8539L2425,-8497L2478,-8432L2477,-8398L2552,-8370L2558,-8337L2587,-8317L2628,-8331L2683,-8293L2708,-8259L2789,-8194L2851,-8125L2819,-8113L2801,-8071L2757,-8042L2769,-7989L2683,-7941L2698,-7843L2680,-7770L2134,-7797L1855,-7808L1874,-8376L1876,-8544L1868,-8572L1382,-8585Z", "cx": 2654, "cy": -7952, "lx": 2176, "ly": -8415, "trampas": ["Presidencia Roque Sáenz Peña", "Villa Ángela", "Charata"]}, {"id": "ar-mn", "nombre": "Misiones", "capital": "Posadas", "region": "NEA", "d": "M3541,-7930L3600,-7888L3651,-7922L3653,-7975L3695,-7994L3707,-8027L3753,-8043L3795,-8033L3801,-8063L3848,-8084L3873,-8124L3906,-8126L3910,-8164L3937,-8191L3965,-8270L3964,-8342L3991,-8395L3978,-8437L3994,-8474L4034,-8448L4053,-8463L4144,-8485L4137,-8468L4199,-8437L4215,-8376L4213,-8321L4253,-8235L4231,-8185L4214,-8081L4219,-8021L4171,-7929L4135,-7935L4093,-7896L4069,-7912L4031,-7854L4014,-7867L3957,-7842L3846,-7807L3838,-7770L3788,-7761L3802,-7739L3715,-7722L3674,-7671L3619,-7654L3588,-7683L3563,-7738L3558,-7801L3523,-7891L3541,-7930Z", "cx": 3559, "cy": -7915, "lx": 4018, "ly": -8072, "trampas": ["Puerto Iguazú", "Oberá", "Eldorado"]}, {"id": "ar-cn", "nombre": "Corrientes", "capital": "Corrientes", "region": "NEA", "d": "M2680,-7770L2698,-7843L2683,-7941L2769,-7989L2797,-8000L2940,-7997L3033,-7967L3079,-7939L3138,-7934L3181,-7906L3264,-7922L3300,-7891L3368,-7902L3417,-7857L3447,-7918L3495,-7944L3541,-7930L3523,-7891L3558,-7801L3563,-7738L3588,-7683L3619,-7654L3573,-7629L3602,-7595L3587,-7570L3549,-7593L3530,-7557L3496,-7548L3490,-7519L3439,-7471L3409,-7462L3402,-7429L3364,-7376L3303,-7344L3282,-7296L3151,-7161L3093,-7145L3079,-7091L3023,-7042L2983,-7029L2977,-6984L2918,-6937L2905,-6904L2923,-6851L2876,-6902L2857,-6963L2807,-7029L2704,-7062L2632,-7042L2596,-7051L2526,-7010L2485,-7025L2407,-7019L2431,-7124L2414,-7169L2440,-7254L2445,-7320L2470,-7386L2515,-7404L2564,-7441L2567,-7474L2599,-7557L2614,-7642L2614,-7722L2653,-7735L2680,-7770Z", "cx": 2700, "cy": -7943, "lx": 2962, "ly": -7416, "trampas": ["Goya", "Paso de los Libres", "Mercedes"]}, {"id": "ar-sj", "nombre": "San Juan", "capital": "San Juan", "region": "Cuyo", "d": "M-564,-6402L-583,-6412L-600,-6493L-565,-6517L-586,-6542L-618,-6545L-668,-6647L-665,-6728L-642,-6796L-614,-6789L-584,-6822L-605,-6850L-601,-6895L-565,-7038L-524,-7029L-489,-7058L-476,-7119L-512,-7130L-499,-7180L-503,-7252L-540,-7366L-537,-7395L-505,-7439L-474,-7455L-477,-7500L-458,-7549L-461,-7605L-443,-7631L-438,-7684L-346,-7659L-295,-7616L-276,-7565L-223,-7498L-244,-7455L-226,-7395L-245,-7329L-233,-7287L-155,-7300L-48,-7272L18,-7216L68,-7162L152,-7095L172,-7052L281,-6941L311,-6883L300,-6849L317,-6825L305,-6736L321,-6681L373,-6648L382,-6607L411,-6567L340,-6562L240,-6575L228,-6558L228,-6439L208,-6454L107,-6445L53,-6500L-50,-6471L-130,-6409L-189,-6410L-197,-6492L-225,-6490L-260,-6527L-298,-6497L-343,-6495L-388,-6470L-392,-6434L-488,-6407L-564,-6402Z", "cx": -95, "cy": -6669, "lx": -163, "ly": -7045, "trampas": ["Caucete", "Jáchal", "Calingasta"]}, {"id": "ar-mz", "nombre": "Mendoza", "capital": "Mendoza", "region": "Cuyo", "d": "M-558,-5155L-546,-5182L-559,-5240L-543,-5258L-563,-5308L-561,-5358L-602,-5454L-561,-5469L-555,-5539L-536,-5591L-526,-5661L-483,-5725L-479,-5764L-424,-5777L-433,-5861L-448,-5870L-448,-5966L-422,-6059L-456,-6104L-484,-6083L-510,-6119L-515,-6167L-486,-6221L-526,-6255L-539,-6353L-564,-6402L-488,-6407L-392,-6434L-388,-6470L-343,-6495L-298,-6497L-260,-6527L-225,-6490L-197,-6492L-189,-6410L-130,-6409L-50,-6471L53,-6500L107,-6445L208,-6454L228,-6439L267,-6312L286,-6277L277,-6227L302,-6052L336,-5999L361,-5927L412,-5854L392,-5800L395,-5749L415,-5674L460,-5597L478,-5503L474,-5381L447,-5240L451,-5223L19,-5217L8,-5175L18,-5126L30,-4709L-16,-4714L-43,-4745L-103,-4766L-172,-4773L-192,-4817L-237,-4833L-294,-4823L-332,-4830L-382,-4874L-379,-4922L-415,-4948L-455,-5001L-484,-5014L-513,-5080L-533,-5076L-537,-5129L-558,-5155Z", "cx": -167, "cy": -6227, "lx": -45, "ly": -5629, "trampas": ["San Rafael", "Malargüe", "Tunuyán"]}, {"id": "ar-sl", "nombre": "San Luis", "capital": "San Luis", "region": "Cuyo", "d": "M451,-5223L447,-5240L474,-5381L478,-5503L460,-5597L415,-5674L395,-5749L392,-5800L412,-5854L361,-5927L336,-5999L302,-6052L277,-6227L286,-6277L267,-6312L228,-6439L228,-6558L240,-6575L340,-6562L411,-6567L447,-6555L554,-6552L599,-6569L681,-6565L728,-6555L821,-6490L836,-6422L912,-6428L925,-6348L880,-6164L852,-6134L862,-5887L859,-5548L856,-5223L451,-5223Z", "cx": 521, "cy": -6104, "lx": 618, "ly": -5907, "trampas": ["Villa Mercedes", "Merlo", "Juana Koslay"]}, {"id": "ar-cb", "nombre": "Córdoba", "capital": "Córdoba", "region": "Pampeana", "d": "M1316,-5540L1162,-5544L859,-5548L862,-5887L852,-6134L880,-6164L925,-6348L912,-6428L836,-6422L821,-6490L728,-6555L681,-6565L679,-6822L749,-7047L784,-7133L858,-7158L914,-7217L910,-7305L932,-7322L1101,-7363L1168,-7347L1170,-7329L1238,-7287L1336,-7283L1364,-7244L1669,-7235L1682,-7225L1722,-7109L1708,-7011L1781,-6919L1696,-6636L1667,-6605L1674,-6523L1663,-6464L1702,-6425L1717,-6381L1743,-6355L1764,-6283L1789,-6234L1778,-6178L1734,-6143L1465,-5738L1333,-5742L1324,-5732L1316,-5540Z", "cx": 1123, "cy": -6712, "lx": 1256, "ly": -6446, "trampas": ["Río Cuarto", "Villa Carlos Paz", "Villa María"]}, {"id": "ar-sf", "nombre": "Santa Fe", "capital": "Santa Fe", "region": "Pampeana", "d": "M1465,-5738L1734,-6143L1778,-6178L1789,-6234L1764,-6283L1743,-6355L1717,-6381L1702,-6425L1663,-6464L1674,-6523L1667,-6605L1696,-6636L1781,-6919L1708,-7011L1722,-7109L1800,-7511L1855,-7808L2134,-7797L2680,-7770L2653,-7735L2614,-7722L2614,-7642L2599,-7557L2567,-7474L2564,-7441L2515,-7404L2470,-7386L2445,-7320L2440,-7254L2414,-7169L2431,-7124L2407,-7019L2417,-6982L2400,-6889L2267,-6694L2172,-6594L2106,-6583L2081,-6509L2095,-6475L2081,-6434L2060,-6315L2080,-6215L2125,-6122L2178,-6075L2181,-6059L2141,-6008L2124,-5962L2103,-5953L2067,-5976L2004,-5984L1987,-5947L1774,-5728L1465,-5738Z", "cx": 2093, "cy": -6612, "lx": 2038, "ly": -6792, "trampas": ["Rosario", "Rafaela", "Venado Tuerto"]}, {"id": "ar-er", "nombre": "Entre Ríos", "capital": "Paraná", "region": "Pampeana", "d": "M2407,-7019L2485,-7025L2526,-7010L2596,-7051L2632,-7042L2704,-7062L2807,-7029L2857,-6963L2876,-6902L2923,-6851L2919,-6798L2889,-6787L2902,-6750L2884,-6691L2830,-6618L2853,-6590L2827,-6508L2795,-6499L2796,-6427L2783,-6399L2803,-6345L2766,-6289L2772,-6104L2745,-6091L2707,-6101L2693,-6028L2660,-5981L2647,-5905L2665,-5852L2667,-5797L2603,-5794L2511,-5867L2476,-5869L2451,-5905L2415,-5903L2382,-5932L2359,-5926L2314,-5951L2292,-5981L2223,-6028L2178,-6075L2125,-6122L2080,-6215L2060,-6315L2081,-6434L2095,-6475L2081,-6509L2106,-6583L2172,-6594L2267,-6694L2400,-6889L2417,-6982L2407,-7019Z", "cx": 2139, "cy": -6577, "lx": 2438, "ly": -6430, "trampas": ["Concordia", "Gualeguaychú", "Colón"]}, {"id": "ar-ba", "nombre": "Buenos Aires", "capital": "La Plata", "region": "Pampeana", "d": "M1602,-3739L1583,-3713L1551,-3732L1569,-3776L1602,-3739ZM1610,-3789L1582,-3839L1586,-3855L1612,-3839L1610,-3789ZM1651,-4172L1663,-4143L1629,-4159L1606,-4195L1651,-4172ZM2667,-5797L2681,-5737L2626,-5708L2656,-5680L2647,-5630L2628,-5616L2624,-5569L2649,-5546L2687,-5582L2727,-5548L2802,-5516L2891,-5448L2958,-5365L2984,-5307L2979,-5285L2916,-5210L2905,-5126L2931,-5063L3010,-4992L3053,-4994L3070,-4975L3064,-4826L3056,-4801L2995,-4730L2943,-4652L2870,-4582L2811,-4513L2798,-4444L2781,-4423L2628,-4345L2389,-4278L2174,-4246L1922,-4216L1851,-4212L1779,-4222L1755,-4213L1627,-4243L1595,-4286L1536,-4287L1551,-4239L1540,-4193L1564,-4142L1621,-4104L1612,-4089L1578,-4125L1556,-4124L1611,-4077L1592,-3956L1544,-3961L1523,-3831L1491,-3801L1508,-3750L1530,-3736L1551,-3684L1521,-3615L1422,-3564L1404,-3564L1391,-3599L1330,-3664L1263,-3678L1276,-4129L1306,-5219L1316,-5540L1324,-5732L1333,-5742L1465,-5738L1774,-5728L1987,-5947L2004,-5984L2067,-5976L2103,-5953L2124,-5962L2141,-6008L2181,-6059L2178,-6075L2223,-6028L2292,-5981L2314,-5951L2359,-5926L2382,-5932L2415,-5903L2451,-5905L2476,-5869L2511,-5867L2603,-5794L2667,-5797Z", "cx": 2778, "cy": -5488, "lx": 2177, "ly": -4814, "trampas": ["Mar del Plata", "Bahía Blanca", "Tandil"]}, {"id": "ar-lp", "nombre": "La Pampa", "capital": "Santa Rosa", "region": "Pampeana", "d": "M30,-4709L18,-5126L8,-5175L19,-5217L451,-5223L856,-5223L859,-5548L1162,-5544L1316,-5540L1306,-5219L1276,-4129L1253,-4132L1195,-4172L1125,-4236L1004,-4290L915,-4305L840,-4308L776,-4297L719,-4317L693,-4304L624,-4329L559,-4337L514,-4332L471,-4342L448,-4389L340,-4436L311,-4497L214,-4483L175,-4534L138,-4548L137,-4597L171,-4639L161,-4675L134,-4697L30,-4709Z", "cx": 1064, "cy": -5017, "lx": 661, "ly": -4918, "trampas": ["General Pico", "Toay", "General Acha"]}, {"id": "ar-df", "nombre": "Ciudad Autónoma de Buenos Aires", "capital": "—", "region": "Pampeana", "d": "M2647,-5630L2671,-5611L2687,-5582L2649,-5546L2624,-5569L2628,-5616L2647,-5630Z", "cx": 2659, "cy": -5600, "lx": 2653, "ly": -5596, "trampas": []}, {"id": "ar-nq", "nombre": "Neuquén", "capital": "Neuquén", "region": "Patagonia", "d": "M-837,-3540L-834,-3564L-865,-3634L-846,-3659L-834,-3732L-804,-3762L-843,-3802L-840,-3845L-810,-3841L-799,-3909L-826,-3962L-820,-4014L-779,-4002L-786,-4028L-768,-4062L-757,-4127L-766,-4225L-721,-4269L-632,-4313L-629,-4366L-663,-4398L-676,-4450L-678,-4515L-730,-4630L-719,-4717L-743,-4765L-716,-4828L-748,-4913L-738,-4963L-719,-4961L-714,-5031L-675,-5060L-630,-5058L-628,-5109L-595,-5150L-558,-5155L-537,-5129L-533,-5076L-513,-5080L-484,-5014L-455,-5001L-415,-4948L-379,-4922L-382,-4874L-332,-4830L-294,-4823L-237,-4833L-192,-4817L-172,-4773L-103,-4766L-43,-4745L-16,-4714L30,-4709L38,-4349L92,-4271L97,-4249L39,-4239L23,-4250L-40,-4201L-98,-4134L-135,-4073L-210,-4035L-234,-3995L-277,-3958L-312,-3957L-382,-3905L-405,-3758L-435,-3718L-492,-3706L-526,-3718L-560,-3692L-622,-3675L-659,-3627L-631,-3580L-658,-3538L-709,-3522L-759,-3538L-837,-3540Z", "cx": 89, "cy": -4255, "lx": -290, "ly": -4331, "trampas": ["San Martín de los Andes", "Villa La Angostura", "Zapala"]}, {"id": "ar-rn", "nombre": "Río Negro", "capital": "Viedma", "region": "Patagonia", "d": "M1404,-3564L1330,-3530L1162,-3534L1093,-3587L1066,-3585L1006,-3618L928,-3646L919,-3676L890,-3687L832,-3646L818,-3588L845,-3445L861,-3411L850,-3374L858,-3332L844,-3261L827,-3265L-791,-3219L-800,-3262L-837,-3339L-821,-3359L-838,-3423L-837,-3540L-759,-3538L-709,-3522L-658,-3538L-631,-3580L-659,-3627L-622,-3675L-560,-3692L-526,-3718L-492,-3706L-435,-3718L-405,-3758L-382,-3905L-312,-3957L-277,-3958L-234,-3995L-210,-4035L-135,-4073L-98,-4134L-40,-4201L23,-4250L39,-4239L97,-4249L92,-4271L38,-4349L30,-4709L134,-4697L161,-4675L171,-4639L137,-4597L138,-4548L175,-4534L214,-4483L311,-4497L340,-4436L448,-4389L471,-4342L514,-4332L559,-4337L624,-4329L693,-4304L719,-4317L776,-4297L840,-4308L915,-4305L1004,-4290L1125,-4236L1195,-4172L1253,-4132L1276,-4129L1263,-3678L1330,-3664L1391,-3599L1404,-3564Z", "cx": 1358, "cy": -3642, "lx": 508, "ly": -3976, "trampas": ["San Carlos de Bariloche", "General Roca", "Cipolletti"]}, {"id": "ar-ch", "nombre": "Chubut", "capital": "Rawson", "region": "Patagonia", "d": "M-672,-1915L-678,-1952L-712,-1997L-708,-2052L-655,-2073L-653,-2110L-610,-2148L-681,-2249L-722,-2261L-752,-2254L-795,-2266L-793,-2314L-747,-2306L-665,-2327L-626,-2311L-605,-2330L-607,-2359L-582,-2402L-605,-2435L-659,-2440L-749,-2433L-749,-2492L-764,-2529L-743,-2545L-722,-2591L-760,-2654L-738,-2674L-744,-2699L-781,-2714L-798,-2740L-793,-2785L-757,-2796L-758,-2830L-823,-2849L-859,-2886L-854,-2931L-869,-3019L-846,-3054L-871,-3127L-853,-3167L-830,-3161L-781,-3192L-791,-3219L827,-3265L844,-3261L892,-3201L980,-3182L952,-3126L990,-3117L1067,-3120L1086,-3139L1082,-3173L1027,-3178L1147,-3236L1171,-3215L1198,-3146L1198,-3064L1187,-3013L1158,-2990L1068,-2973L1035,-3009L1049,-3051L991,-3097L949,-3095L868,-3051L855,-3009L939,-2961L990,-2944L1018,-2952L986,-2914L909,-2889L845,-2841L845,-2815L772,-2719L775,-2667L799,-2567L777,-2534L798,-2493L770,-2462L755,-2419L721,-2411L687,-2380L680,-2329L713,-2320L703,-2266L672,-2279L622,-2273L568,-2289L478,-2241L493,-2216L414,-2209L369,-2171L309,-2084L300,-2025L282,-2014L254,-1956L75,-1952L-672,-1915Z", "cx": 829, "cy": -2841, "lx": 34, "ly": -2579, "trampas": ["Comodoro Rivadavia", "Trelew", "Puerto Madryn"]}, {"id": "ar-sc", "nombre": "Santa Cruz", "capital": "Río Gallegos", "region": "Patagonia", "d": "M254,-1956L246,-1903L271,-1814L294,-1772L360,-1727L438,-1630L569,-1604L619,-1612L671,-1567L673,-1467L648,-1391L646,-1346L621,-1291L635,-1281L585,-1262L549,-1224L540,-1191L473,-1165L426,-1113L373,-1085L356,-1037L311,-1008L280,-971L269,-918L227,-847L246,-848L264,-895L248,-720L228,-663L178,-618L125,-606L82,-664L52,-722L66,-653L121,-597L103,-579L12,-533L-26,-457L-39,-397L-34,-344L-84,-294L-40,-319L-13,-208L9,-150L7,-127L-21,-115L-55,-128L-122,-104L-59,-117L17,-103L72,12L140,109L48,91L-32,60L-87,61L-183,25L-580,46L-591,7L-617,-20L-661,-42L-679,-79L-700,-87L-682,-114L-670,-196L-702,-239L-683,-261L-682,-325L-699,-348L-695,-385L-739,-397L-760,-374L-795,-386L-856,-330L-874,-336L-897,-397L-919,-490L-967,-527L-960,-567L-983,-594L-966,-653L-999,-725L-979,-801L-912,-808L-922,-829L-893,-913L-838,-944L-809,-986L-815,-1097L-757,-1141L-775,-1226L-823,-1274L-788,-1379L-789,-1437L-754,-1446L-726,-1493L-692,-1529L-726,-1568L-717,-1649L-664,-1688L-668,-1744L-692,-1833L-728,-1860L-697,-1876L-672,-1915L75,-1952L254,-1956Z", "cx": -41, "cy": -109, "lx": -295, "ly": -931, "trampas": ["El Calafate", "Caleta Olivia", "Puerto Deseado"]}, {"id": "ar-tf", "nombre": "Tierra del Fuego", "capital": "Ushuaia", "region": "Patagonia", "d": "M928,893L1028,900L998,927L996,908L943,932L934,913L864,953L849,929L928,893ZM127,943L116,943L92,219L163,316L164,340L118,376L114,415L134,433L201,446L228,530L266,570L313,605L311,628L364,675L467,737L522,807L644,867L671,872L745,860L774,865L740,954L722,944L673,972L667,952L617,953L615,973L555,980L513,999L463,964L420,952L222,937L179,921L175,938L127,943Z", "cx": 180, "cy": 924, "lx": 209, "ly": 616, "trampas": ["Río Grande", "Tolhuin", "Puerto Almanza"]}], "malvinas": {"d": "M1880,124L1884,127L1879,135L1868,145L1864,142L1870,124L1870,118L1862,109L1863,97L1867,109L1881,110L1884,115L1880,124ZM1588,-27L1579,-23L1587,-20L1582,-12L1575,-13L1563,-26L1567,-28L1576,-22L1582,-34L1588,-27ZM1648,16L1615,15L1617,11L1601,-1L1602,-13L1596,-17L1602,-23L1615,-23L1622,-34L1631,-37L1639,-25L1624,-16L1619,-8L1636,-12L1649,-22L1652,-29L1649,-34L1656,-41L1657,-32L1644,4L1653,5L1648,16ZM1568,-68L1580,-72L1590,-67L1575,-65L1572,-48L1565,-57L1568,-68ZM1906,-28L1885,-10L1848,39L1825,49L1824,38L1813,30L1809,37L1810,46L1806,49L1781,49L1780,45L1786,37L1769,44L1766,50L1769,73L1746,97L1731,91L1730,98L1719,84L1709,80L1720,104L1699,119L1688,117L1683,103L1691,104L1677,83L1683,76L1657,72L1656,76L1666,79L1675,96L1660,94L1647,75L1639,73L1626,57L1614,50L1619,39L1643,47L1646,58L1650,58L1648,47L1675,42L1659,32L1655,23L1673,24L1682,27L1685,34L1691,27L1694,35L1700,31L1717,42L1720,39L1717,34L1733,32L1746,17L1743,13L1722,24L1704,17L1720,19L1730,15L1738,4L1736,-3L1741,-27L1756,-31L1748,-22L1757,-23L1752,-9L1760,-1L1763,-10L1769,-11L1767,-20L1769,-34L1775,-36L1779,-26L1783,-28L1785,-24L1794,-30L1795,-36L1796,-48L1764,-50L1759,-49L1757,-38L1727,-34L1723,-26L1719,-27L1716,-37L1704,-48L1703,-62L1706,-67L1739,-55L1759,-64L1774,-61L1789,-66L1801,-55L1817,-51L1810,-61L1795,-66L1772,-95L1735,-114L1735,-127L1759,-124L1748,-139L1726,-143L1713,-151L1710,-171L1719,-173L1747,-157L1773,-133L1807,-119L1841,-123L1836,-129L1823,-132L1838,-154L1841,-141L1861,-152L1868,-150L1864,-143L1889,-135L1875,-134L1880,-126L1930,-131L1945,-139L1924,-125L1943,-118L1964,-123L1954,-136L1955,-149L1962,-149L1961,-155L1964,-155L2001,-127L1989,-127L1986,-117L1995,-116L1974,-100L1971,-105L1966,-103L1964,-92L1969,-91L1958,-70L1947,-62L1944,-66L1945,-73L1919,-55L1925,-55L1906,-28ZM1864,-175L1859,-173L1862,-167L1859,-164L1850,-163L1839,-179L1852,-182L1864,-175ZM1806,-150L1791,-149L1782,-155L1782,-159L1791,-166L1800,-167L1808,-157L1819,-161L1797,-175L1782,-193L1788,-195L1792,-186L1801,-180L1828,-179L1832,-167L1816,-145L1806,-150ZM2276,-6L2292,-6L2265,3L2244,3L2238,9L2183,4L2205,18L2182,18L2161,25L2197,24L2147,46L2078,38L2050,17L2044,4L2039,10L2037,22L2066,45L2069,52L2065,57L2089,58L2101,66L2101,73L2106,78L2091,87L2094,93L2094,111L2088,110L2079,91L2067,83L2063,87L2053,85L2054,92L2037,104L2035,88L2030,93L2026,79L2014,76L2013,71L2006,71L1997,60L1985,67L1972,61L1965,66L1965,70L1985,72L1989,86L2002,87L1994,96L2007,100L1993,107L1991,113L2014,112L2014,116L2001,123L2009,137L2002,143L1989,134L1975,132L1968,116L1956,110L1949,100L1944,100L1940,112L1935,104L1930,107L1937,122L1932,130L1948,141L1949,146L1942,160L1950,168L1948,174L1938,163L1919,153L1919,142L1903,133L1908,124L1895,122L1895,114L1877,91L1881,86L1894,95L1897,89L1895,85L1907,81L1909,77L1899,67L1898,59L1913,64L1907,52L1922,46L1906,38L1907,32L1911,29L1929,38L1934,34L1924,22L1936,16L1932,9L1952,3L1955,7L1962,-11L1975,-7L1973,-19L1993,-31L1996,-26L2005,-34L2024,-34L2028,-12L2023,8L2035,5L2034,-25L2030,-32L2032,-38L2038,-40L2039,-46L2018,-57L2005,-74L2016,-85L2019,-96L2033,-68L2039,-76L2033,-92L2037,-95L2044,-92L2018,-111L2024,-125L2036,-121L2046,-124L2048,-131L2072,-134L2073,-143L2061,-164L2059,-176L2069,-165L2102,-145L2123,-138L2134,-149L2154,-148L2169,-140L2180,-124L2180,-105L2171,-99L2156,-100L2152,-116L2146,-119L2136,-107L2142,-106L2143,-102L2140,-88L2160,-90L2158,-66L2165,-70L2169,-60L2181,-62L2185,-42L2193,-29L2197,-30L2192,-45L2194,-48L2207,-41L2206,-48L2194,-59L2201,-66L2200,-70L2188,-70L2185,-86L2179,-79L2172,-80L2192,-108L2203,-113L2269,-112L2276,-90L2285,-74L2293,-70L2285,-61L2292,-58L2289,-54L2259,-59L2239,-73L2237,-70L2239,-62L2228,-68L2214,-62L2231,-46L2249,-46L2280,-35L2287,-21L2260,-15L2276,-6ZM1923,-172L1887,-182L1884,-189L1893,-193L1908,-185L1929,-186L1937,-173L1946,-181L1954,-174L1956,-160L1934,-158L1923,-172ZM1862,165L1866,156L1878,155L1878,159L1867,172L1871,175L1884,173L1886,177L1874,189L1851,171L1862,165ZM2139,82L2146,82L2144,87L2136,85L2137,90L2133,92L2140,91L2138,113L2133,110L2134,106L2121,99L2117,87L2131,77L2139,82ZM1887,36L1891,50L1887,53L1882,48L1887,36ZM1895,-164L1905,-153L1906,-160L1911,-158L1911,-153L1924,-144L1897,-137L1891,-142L1897,-149L1884,-151L1877,-158L1895,-164ZM1725,-202L1738,-184L1735,-181L1734,-186L1724,-192L1722,-199L1725,-202ZM1620,-284L1634,-266L1618,-272L1621,-276L1620,-284Z", "lx": 1958, "ly": -25}};
+const NS = "http://www.w3.org/2000/svg";
+const P = DATA.provincias, byId = Object.fromEntries(P.map(p => [p.id, p]));
+// Las Islas Malvinas forman parte de la provincia de Tierra del Fuego
+if (DATA.malvinas) byId["ar-tf"].d += DATA.malvinas.d;
+const $ = id => document.getElementById(id);
+const svg = $("svg");
+svg.setAttribute("viewBox", DATA.viewBox.join(" "));
+svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+const shapes = {}, caps = {};
+const gProv = document.createElementNS(NS, "g"), gCap = document.createElementNS(NS, "g");
+gCap.setAttribute("class", "capwrap");
+P.forEach(p => {
+  const el = document.createElementNS(NS, "path");
+  el.setAttribute("d", p.d); el.setAttribute("class", "prov r-" + p.region); el.dataset.id = p.id;
+  gProv.appendChild(el); shapes[p.id] = [el];
+});
+// CABA es diminuta: le sumamos un círculo tocable encima
+const cabaP = byId["ar-df"];
+const cc = document.createElementNS(NS, "circle");
+cc.setAttribute("cx", cabaP.cx); cc.setAttribute("cy", cabaP.cy); cc.setAttribute("r", 95);
+cc.setAttribute("class", "prov caba r-Pampeana"); cc.dataset.id = "ar-df";
+P.forEach(p => {
+  if (p.id === "ar-df") return;
+  const c = document.createElementNS(NS, "circle");
+  c.setAttribute("cx", p.cx); c.setAttribute("cy", p.cy); c.setAttribute("r", 55); c.setAttribute("class", "cap");
+  gCap.appendChild(c); caps[p.id] = c;
+});
+svg.append(gProv, cc, gCap); shapes["ar-df"].push(cc);
+
+/* ---------- Zoom del mapa (solo el mapa, no la página) ---------- */
+const BASE = DATA.viewBox.slice(), Z = { s: 1, cx: BASE[0] + BASE[2] / 2, cy: BASE[1] + BASE[3] / 2, pan: null, pinch: null, justPanned: false, ptrs: new Map() };
+const ZMAX = 5;
+function applyZoom(){
+  Z.s = Math.min(ZMAX, Math.max(1, Z.s));
+  const w = BASE[2] / Z.s, h = BASE[3] / Z.s;
+  Z.cx = Math.min(BASE[0] + BASE[2] - w / 2, Math.max(BASE[0] + w / 2, Z.cx));
+  Z.cy = Math.min(BASE[1] + BASE[3] - h / 2, Math.max(BASE[1] + h / 2, Z.cy));
+  svg.setAttribute("viewBox", [Z.cx - w / 2, Z.cy - h / 2, w, h].join(" "));
+  const k = 1 / Z.s; svg.style.setProperty("--k", k);
+  Object.values(caps).forEach(c => c.setAttribute("r", Math.max(55 * k, 22)));
+  cc.setAttribute("r", Math.max(95 * k, 40));
+  svg.classList.toggle("zoomed", Z.s > 1.01);
+}
+function toUser(x, y){ const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+function zoomAt(x, y, s){
+  const u = toUser(x, y); Z.s = s; Z.cx = u.x; Z.cy = u.y; applyZoom();
+  const m = svg.getScreenCTM(), sx = m.a * u.x + m.e, sy = m.d * u.y + m.f;
+  Z.cx += (sx - x) / m.a; Z.cy += (sy - y) / m.d; applyZoom();
+}
+function zoomCenter(f){ const r = svg.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, Z.s * f); }
+function resetZoom(){ Z.s = 1; Z.cx = BASE[0] + BASE[2] / 2; Z.cy = BASE[1] + BASE[3] / 2; applyZoom(); }
+function showInZoom(id){
+  if (Z.s <= 1.01) return;
+  const b = (id === "ar-df" ? shapes[id][1] : shapes[id][0]).getBBox(), w = BASE[2] / Z.s, h = BASE[3] / Z.s;
+  if (b.x >= Z.cx - w / 2 && b.x + b.width <= Z.cx + w / 2 && b.y >= Z.cy - h / 2 && b.y + b.height <= Z.cy + h / 2) return;
+  Z.cx = b.x + b.width / 2; Z.cy = b.y + b.height / 2; applyZoom();
+}
+svg.addEventListener("pointerdown", e => {
+  if (Z.s <= 1.01) return;
+  Z.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (Z.ptrs.size === 1) Z.pan = { x: e.clientX, y: e.clientY, cx: Z.cx, cy: Z.cy, moved: false };
+  else Z.pan = null;
+});
+svg.addEventListener("pointermove", e => {
+  if (!Z.ptrs.has(e.pointerId)) return;
+  Z.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (T) return;
+  if (Z.pan) {
+    const dx = e.clientX - Z.pan.x, dy = e.clientY - Z.pan.y;
+    if (!Z.pan.moved && Math.hypot(dx, dy) > 8) Z.pan.moved = true;
+    if (Z.pan.moved) { const m = svg.getScreenCTM(); Z.cx = Z.pan.cx - dx / m.a; Z.cy = Z.pan.cy - dy / m.d; applyZoom(); }
+  }
+});
+function ptrEnd(e){
+  if (!Z.ptrs.has(e.pointerId)) return;
+  Z.ptrs.delete(e.pointerId);
+  if ((Z.pan && Z.pan.moved) || Z.pinch) { Z.justPanned = true; setTimeout(() => Z.justPanned = false, 80); }
+  if (Z.ptrs.size < 2) Z.pinch = null;
+  if (Z.ptrs.size === 0) Z.pan = null;
+}
+svg.addEventListener("pointerup", ptrEnd); svg.addEventListener("pointercancel", ptrEnd); svg.addEventListener("pointerleave", ptrEnd);
+svg.addEventListener("wheel", e => { if (!e.ctrlKey) return; e.preventDefault(); zoomAt(e.clientX, e.clientY, Z.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
+// Pellizcar con dos dedos sobre el mapa: agranda solo el mapa (iPhone, iPad y Android)
+let T = null;
+const tdist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+const tmid = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
+svg.addEventListener("touchstart", e => {
+  if (e.touches.length !== 2) return;
+  e.preventDefault();
+  T = { d0: tdist(e.touches), s0: Z.s }; Z.pan = null; Z.justPanned = true;
+}, { passive: false });
+svg.addEventListener("touchmove", e => {
+  if (!T || e.touches.length !== 2) return;
+  e.preventDefault();
+  const [x, y] = tmid(e.touches);
+  zoomAt(x, y, T.s0 * tdist(e.touches) / T.d0);
+}, { passive: false });
+function touchDone(e){ if (T && e.touches.length < 2) { T = null; setTimeout(() => Z.justPanned = false, 200); } }
+svg.addEventListener("touchend", touchDone); svg.addEventListener("touchcancel", touchDone);
+// en iPhone/iPad, evitar que el pellizco agrande toda la página
+["gesturestart", "gesturechange"].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+applyZoom();
+
+svg.addEventListener("click", e => { if (Z.justPanned) return; let id = e.target.dataset && e.target.dataset.id; if (!id && nearCABA(e.clientX, e.clientY, 40)) id = "ar-df"; if (id) onMap(id, e); });
+
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+
+
+/* ---------- Sonidos (sintetizados, sin archivos) ---------- */
+let AC = null, soundOn = store.get("sound") !== "0";
+function actx(){
+  if (!soundOn) return null;
+  try {
+    if (!AC || AC.state === "closed") { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; AC = new A(); }
+    // iPhone/iPad dejan el audio "interrumpido" tras bloquear la pantalla, una llamada u otra app con sonido
+    if (AC.state !== "running") AC.resume().catch(() => {});
+  } catch (e) { return null; }
+  return AC;
+}
+// Si el audio quedó trabado, lo despertamos con el próximo toque; si no revive, lo creamos de nuevo
+let audioFix = null;
+function wakeAudio(){
+  if (!AC || !soundOn || AC.state === "running") return;
+  AC.resume().catch(() => {});
+  clearTimeout(audioFix);
+  audioFix = setTimeout(() => {
+    if (!AC || AC.state === "running" || document.hidden) return;
+    const hadMusic = typeof MUS !== "undefined" && !!MUS.timer;
+    if (hadMusic) musicStop();
+    try { AC.close(); } catch (e) {}
+    AC = null;
+    if (typeof MUS !== "undefined") MUS.noise = null;
+    actx();
+    if (hadMusic && RN.running && !RN.paused) musicStart();
+  }, 700);
+}
+["pointerdown", "touchend", "keydown"].forEach(t => document.addEventListener(t, wakeAudio, true));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) wakeAudio(); });
+function tone(f, t, dur, type, vol, f2){
+  const a = actx(); if (!a) return;
+  const t0 = a.currentTime + t, o = a.createOscillator(), g = a.createGain();
+  o.type = type || "triangle"; o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.2, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+const semi = n => Math.pow(2, n / 12);
+const sfx = {
+  ok(streak){ const k = semi(Math.min(streak || 0, 8)); tone(660 * k, 0, .12, "triangle", .22); tone(990 * k, .09, .2, "triangle", .2); },
+  bad(){ tone(240, 0, .28, "sawtooth", .09, 150); tone(180, .02, .3, "square", .04, 120); },
+  miss(){ tone(300, 0, .45, "triangle", .2, 90); },
+  level(){ [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .08, .18, "triangle", .18)); },
+  win(stars){ const seq = stars >= 2 ? [523, 659, 784, 1047, 1319] : [523, 659, 784]; seq.forEach((f, i) => tone(f, i * .11, .26, "triangle", .2)); },
+  over(){ [392, 330, 262, 196].forEach((f, i) => tone(f, i * .16, .3, "triangle", .18)); }
+};
+function soundUI(){ $("snd").setAttribute("aria-pressed", soundOn); $("snd").title = soundOn ? "Sonido activado" : "Sonido apagado"; }
+let regionsOn = store.get("regions") !== "0";
+function applyRegions(){ document.body.classList.toggle("no-regions", !regionsOn); $("regions").checked = regionsOn; $("sReg").hidden = !regionsOn; }
+$("regions").onchange = () => { regionsOn = $("regions").checked; store.set("regions", regionsOn ? "1" : "0"); applyRegions(); };
+applyRegions();
+$("snd").onclick = () => { soundOn = !soundOn; store.set("sound", soundOn ? "1" : "0"); soundUI();
+  if (soundOn) { sfx.ok(); if (RN.running && !RN.paused) musicStart(); } else musicStop(); };
+soundUI();
+
+const S = { mode: "ubicar", queue: [], i: 0, ok: 0, errs: [], answered: false, timer: null, sel: null };
+$("len").value = store.get("len") || "10";
+$("caba").checked = store.get("caba") !== "0";
+
+// Al resaltar una provincia la pasamos al frente: si no, las vecinas tapan la mitad de su contorno
+const RAISE = new Set(["sel", "target", "reveal", "hover"]);
+function cls(id, c, on){
+  shapes[id].forEach(el => { el.classList.toggle(c, on); if (on && RAISE.has(c) && el.parentNode === gProv) gProv.appendChild(el); });
+}
+function clearMap(){
+  P.forEach(p => ["ok","bad","reveal","target","sel","slot","hover"].forEach(c => cls(p.id, c, false)));
+  Object.values(caps).forEach(c => c.classList.remove("show"));
+  gCap.classList.toggle("all", S.mode === "estudiar");
+}
+function pool(){
+  return P.filter(p => p.id !== "ar-df" || (S.mode === "ubicar" && $("caba").checked));
+}
+
+function setMode(m){
+  resetZoom();
+  S.mode = m; store.set("mode", m);
+  renderNav(m);
+  document.body.classList.toggle("mode-puzzle", m === "puzzle");
+  document.body.classList.toggle("mode-rain", m === "lluvia");
+  clearInterval(PZ.tick); clearTimeout(S.timer); stopRain();
+  $("rain").hidden = m !== "lluvia";
+  $("board").hidden = m !== "lluvia"; $("settings").hidden = m === "lluvia" || m === "estudiar"; $("saveBox").hidden = true; $("endKindBox").hidden = true;
+  if (m === "puzzle") startPuzzle();
+  else if (m === "lluvia") rainReady();
+  else if (m === "estudiar") {
+    clearMap();
+    $("play").hidden = true; $("end").hidden = true; $("puzzle").hidden = true; $("study").hidden = false;
+    $("sName").hidden = true; $("sName").textContent = ""; $("sCap").textContent = ""; $("sReg").textContent = "";
+  } else start();
+}
+
+function start(list){
+  document.body.classList.remove("ended");
+  clearTimeout(S.timer);
+  const all = shuffle(pool());
+  const n = $("len").value === "all" ? all.length : Math.min(10, all.length);
+  S.queue = list ? shuffle(list) : all.slice(0, n);
+  S.i = 0; S.ok = 0; S.errs = [];
+  $("play").hidden = false; $("end").hidden = true; $("study").hidden = true; $("puzzle").hidden = true;
+  ask();
+}
+
+
+const isPhone = () => matchMedia("(max-width:760px)").matches;
+function focusProvince(id){
+  if (!shapes[id]) return;
+  showInZoom(id);
+  if (!isPhone()) return;
+  const el = id === "ar-df" ? shapes[id][1] : shapes[id][0];
+  requestAnimationFrame(() => {
+    const r = el.getBoundingClientRect(), panel = document.querySelector(".panel");
+    const pr = panel.getBoundingClientRect();
+    const top = getComputedStyle(panel).position === "sticky" && pr.bottom > 0 ? pr.bottom : 0;
+    const bottom = window.innerHeight;
+    if (r.top >= top + 12 && r.bottom <= bottom - 12) return;
+    window.scrollBy({ top: (r.top + r.bottom) / 2 - (top + bottom) / 2, behavior: "smooth" });
+  });
+}
+function ask(){
+  clearMap(); S.answered = false;
+  const q = S.queue[S.i], n = S.queue.length;
+  $("count").textContent = `Pregunta ${S.i + 1} de ${n}`;
+  $("score").textContent = `Aciertos: ${S.ok}`;
+  $("prog").style.width = (S.i / n * 100) + "%";
+  $("fb").textContent = ""; $("fb").className = "fb"; $("next").hidden = true;
+  $("opts").hidden = true; $("opts").innerHTML = "";
+  if (S.mode === "ubicar") {
+    $("ask").textContent = "Tocá en el mapa:";
+    $("big").textContent = q.nombre;
+  } else if (S.mode === "capital") {
+    $("ask").textContent = "¿En qué provincia está esta capital? Tocala en el mapa:";
+    $("big").textContent = q.capital;
+  } else {
+    $("ask").textContent = "¿Cuál es la capital de esta provincia?";
+    $("big").textContent = q.nombre;
+    cls(q.id, "target", true); focusProvince(q.id);
+    const others = shuffle(P.filter(p => p.id !== q.id && p.id !== "ar-df")).map(p => p.capital);
+    const opts = shuffle([q.capital, ...shuffle(q.trampas).slice(0, 2), others[0]]);
+    opts.forEach(t => {
+      const b = document.createElement("button"); b.textContent = t;
+      b.onclick = () => choose(b, t); $("opts").appendChild(b);
+    });
+    $("opts").hidden = false;
+  }
+}
+
+function finishAnswer(good){
+  S.answered = true;
+  if (good) sfx.ok(); else sfx.bad();
+  if (good) { S.ok++; } else { S.errs.push(S.queue[S.i]); }
+  $("score").textContent = `Aciertos: ${S.ok}`;
+  $("next").hidden = false;
+  $("next").textContent = S.i + 1 < S.queue.length ? "Siguiente" : "Ver resultado";
+  if (good) S.timer = setTimeout(next, 1300);
+  else $("next").focus({ preventScroll: true });
+}
+
+// CABA es diminuta: un toque cerca (en pantalla) cuenta como tocarla cuando es la respuesta buscada
+function nearCABA(x, y, px){
+  const r = cc.getBoundingClientRect();
+  return Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) <= px;
+}
+function onMap(id, e){
+  if (e && id !== "ar-df" && nearCABA(e.clientX, e.clientY, 40)) {
+    const want = (S.mode === "lluvia" && RN.words.some(w => w.id === "ar-df")) ||
+                 (S.mode === "ubicar" && !S.answered && S.queue[S.i] && S.queue[S.i].id === "ar-df");
+    if (want) id = "ar-df";
+  }
+  if (S.mode === "estudiar") return study(id);
+  if (S.mode === "lluvia") return rainHit(id);
+  if (S.mode === "puzzle") { if (PZ.sel) tryPlace(PZ.sel, id, e.clientX, e.clientY); return; }
+  if (S.mode === "elegir" || S.answered || $("play").hidden) return;
+  const q = S.queue[S.i], good = id === q.id, fb = $("fb"), clicked = byId[id];
+  if (good) {
+    cls(id, "ok", true);
+    fb.className = "fb ok";
+    fb.textContent = S.mode === "ubicar"
+      ? (q.id === "ar-df" ? "¡Muy bien! Esa es la Ciudad de Buenos Aires." : `¡Muy bien! Su capital es ${q.capital}.`)
+      : `¡Sí! ${q.capital} es la capital de ${q.nombre}.`;
+  } else {
+    cls(id, "bad", true); cls(q.id, "reveal", true); focusProvince(q.id);
+    fb.className = "fb bad";
+    fb.textContent = S.mode === "ubicar"
+      ? `Esa es ${clicked.nombre}. ${q.nombre} es la que titila en verde.`
+      : `Esa es ${clicked.nombre}. ${q.capital} está en ${q.nombre}, la que titila en verde.`;
+  }
+  if (S.mode === "capital" && caps[q.id]) caps[q.id].classList.add("show");
+  finishAnswer(good);
+}
+
+function choose(btn, t){
+  if (S.answered) return;
+  const q = S.queue[S.i], good = t === q.capital;
+  [...$("opts").children].forEach(b => { b.disabled = true; if (b.textContent === q.capital) b.classList.add("ok"); });
+  if (!good) btn.classList.add("bad");
+  cls(q.id, "target", false); cls(q.id, good ? "ok" : "reveal", true); if (!good) focusProvince(q.id);
+  caps[q.id].classList.add("show");
+  $("big").textContent = q.nombre;
+  $("fb").className = "fb " + (good ? "ok" : "bad");
+  $("fb").textContent = good ? `¡Correcto! ${q.capital} es la capital de ${q.nombre}.`
+                             : `No. La capital de ${q.nombre} es ${q.capital}.`;
+  finishAnswer(good);
+}
+
+function next(){
+  clearTimeout(S.timer);
+  if (!S.answered) return;
+  S.i++;
+  if (S.i >= S.queue.length) end(); else ask();
+}
+
+function end(){
+  document.body.classList.add("ended");
+  clearMap();
+  $("prog").style.width = "100%";
+  const n = S.queue.length, pct = S.ok / n;
+  const st = pct >= .9 ? 3 : pct >= .7 ? 2 : pct >= .4 ? 1 : 0;
+  $("stars").innerHTML = [0,1,2].map(i => `<span class="${i < st ? "" : "off"}">★</span>`).join("");
+  $("final").textContent = `${S.ok} de ${n}`; $("endKindBox").hidden = true;
+  if (st >= 1) sfx.win(st); else sfx.over();
+  const key = `best-${S.mode}-${$("len").value}`, prev = +(store.get(key) || 0), score = Math.round(pct * 100);
+  if (score > prev) store.set(key, score);
+  $("bestTxt").textContent = score > prev && prev > 0 ? `¡Nuevo récord! Antes tenías ${prev}%.`
+                            : `Récord en este modo: ${Math.max(prev, score)}%`;
+  const ul = $("errs"); ul.innerHTML = "";
+  S.errs.forEach(p => { const li = document.createElement("li");
+    li.innerHTML = `<b>${p.nombre}</b><span>${p.id === "ar-df" ? "" : p.capital}</span>`; ul.appendChild(li); });
+  $("errTitle").hidden = $("review").hidden = !S.errs.length;
+  ul.hidden = !S.errs.length;
+  S.errs.forEach(p => cls(p.id, "bad", true));
+  $("play").hidden = true; $("end").hidden = false;
+}
+
+function study(id){
+  const p = byId[id];
+  P.forEach(x => cls(x.id, "sel", false)); cls(id, "sel", true);
+  $("sName").hidden = false; $("sName").textContent = p.nombre;
+  $("sCap").className = "fb ok";
+  $("sCap").textContent = id === "ar-df" ? "Es la Capital Federal del país." : `Capital: ${p.capital}`;
+  if (id === "ar-tf") $("sCap").textContent += ". Incluye las Islas Malvinas, las islas del Atlántico Sur y la Antártida Argentina.";
+  $("sReg").textContent = `Región ${p.region === "Pampeana" ? "Pampeana" : p.region}`;
+}
+
+
+/* ---------- Rompecabezas ---------- */
+const PZ = { total: 0, placed: 0, errs: {}, sel: null, t0: 0, tick: null, drag: null, hover: null, ghost: null };
+const fmt = ms => { const t = Math.floor(ms / 1000); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+function pzPool(){ return P.filter(p => p.id !== "ar-df" || $("caba").checked); }
+function anchor(id){ const p = byId[id]; return id === "ar-df" ? [p.cx, p.cy] : [p.lx, p.ly]; }
+function pieceShape(id){
+  const el = document.createElementNS(NS, id === "ar-df" ? "circle" : "path");
+  if (id === "ar-df") { const p = byId[id]; el.setAttribute("cx", p.cx); el.setAttribute("cy", p.cy); el.setAttribute("r", 95); }
+  else el.setAttribute("d", byId[id].d);
+  el.setAttribute("class", "r-" + byId[id].region);
+  return el;
+}
+function bbox(id){ return (id === "ar-df" ? shapes[id][1] : shapes[id][0]).getBBox(); }
+
+function startPuzzle(){
+  document.body.classList.remove("ended");
+  clearInterval(PZ.tick); clearMap();
+  $("play").hidden = true; $("end").hidden = true; $("study").hidden = true; $("puzzle").hidden = false;
+  const pool = pzPool();
+  pool.forEach(p => cls(p.id, "slot", true));
+  Object.assign(PZ, { total: pool.length, placed: 0, errs: {}, sel: null, t0: Date.now() });
+  const tray = $("tray"); tray.innerHTML = "";
+  shuffle(pool).forEach(p => {
+    const b = document.createElement("button"); b.className = "piece"; b.dataset.id = p.id; b.type = "button";
+    const bb = bbox(p.id), pad = Math.max(bb.width, bb.height) * .08 + 20;
+    const m = document.createElementNS(NS, "svg");
+    m.setAttribute("viewBox", [bb.x - pad, bb.y - pad, bb.width + 2 * pad, bb.height + 2 * pad].join(" "));
+    m.appendChild(pieceShape(p.id));
+    const t = document.createElement("span"); t.textContent = p.id === "ar-df" ? "CABA" : p.nombre;
+    b.append(m, t); tray.appendChild(b);
+    b.addEventListener("pointerdown", pDown);
+    b.addEventListener("pointermove", pMove);
+    b.addEventListener("pointerup", pUp);
+    b.addEventListener("pointercancel", pCancel);
+  });
+  $("pzFb").textContent = ""; $("pzFb").className = "fb";
+  pzStatus();
+  PZ.tick = setInterval(() => { $("pzTime").textContent = fmt(Date.now() - PZ.t0); }, 1000);
+}
+function pzStatus(){
+  $("pzCount").textContent = `Colocadas ${PZ.placed} de ${PZ.total}`;
+  $("pzProg").style.width = (PZ.placed / PZ.total * 100) + "%";
+  $("pzTime").textContent = fmt(Date.now() - PZ.t0);
+}
+function selectPiece(id){
+  PZ.sel = PZ.sel === id ? null : id;
+  document.querySelectorAll(".piece").forEach(b => b.classList.toggle("sel", b.dataset.id === PZ.sel));
+  if (PZ.sel) { $("pzFb").className = "fb"; $("pzFb").textContent = `Ahora tocá en el mapa dónde va ${byId[id].nombre}.`; }
+}
+function setHover(id){
+  if (PZ.hover === id) return;
+  if (PZ.hover) cls(PZ.hover, "hover", false);
+  PZ.hover = id; if (id) cls(id, "hover", true);
+}
+function idAt(x, y){ const el = document.elementFromPoint(x, y); return el && el.closest && el.closest("#svg") && el.dataset ? el.dataset.id : null; }
+function makeGhost(id){
+  const bb = bbox(id), k = svg.getScreenCTM().a, g = document.createElementNS(NS, "svg");
+  g.id = "ghost"; g.setAttribute("viewBox", [bb.x, bb.y, bb.width, bb.height].join(" "));
+  g.setAttribute("width", bb.width * k); g.setAttribute("height", bb.height * k);
+  g.appendChild(pieceShape(id)); document.body.appendChild(g);
+  const [ax, ay] = anchor(id);
+  PZ.ghost = { el: g, dx: (ax - bb.x) * k, dy: (ay - bb.y) * k };
+}
+function moveGhost(x, y){ if (PZ.ghost) PZ.ghost.el.style.transform = `translate(${x - PZ.ghost.dx}px, ${y - PZ.ghost.dy}px)`; }
+function dropGhost(){ if (PZ.ghost) PZ.ghost.el.remove(); PZ.ghost = null; setHover(null); }
+
+function pDown(e){
+  e.preventDefault();
+  if (!e.isPrimary) { pCancel(); return; }
+  if (PZ.ghost) dropGhost();
+  PZ.drag = { id: e.currentTarget.dataset.id, x: e.clientX, y: e.clientY, moved: false };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+}
+function pMove(e){
+  const d = PZ.drag; if (!d) return;
+  if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) { d.moved = true; makeGhost(d.id); }
+  if (d.moved) { moveGhost(e.clientX, e.clientY); const id = idAt(e.clientX, e.clientY); setHover(id && shapes[id][0].classList.contains("slot") ? id : null); }
+}
+function pUp(e){
+  const d = PZ.drag; PZ.drag = null; if (!d) return;
+  if (!d.moved) return selectPiece(d.id);
+  dropGhost();
+  tryPlace(d.id, idAt(e.clientX, e.clientY), e.clientX, e.clientY);
+}
+function pCancel(){ PZ.drag = null; dropGhost(); }
+
+function nearAnchor(id, x, y){
+  const pt = svg.createSVGPoint(); pt.x = x; pt.y = y;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse()), [ax, ay] = anchor(id);
+  return Math.hypot(p.x - ax, p.y - ay) < 260;
+}
+function tryPlace(id, target, x, y){
+  const fb = $("pzFb");
+  if (!shapes[id][0].classList.contains("slot")) return;
+  if (id === "ar-df" && nearCABA(x, y, 50)) return place(id);
+  if (target === id || (target && nearAnchor(id, x, y))) return place(id);
+  if (!target && nearAnchor(id, x, y)) return place(id);
+  if (!target) { fb.className = "fb"; fb.textContent = "Soltala arriba del mapa."; return; }
+  PZ.errs[id] = (PZ.errs[id] || 0) + 1; sfx.bad();
+  cls(target, "bad", true); setTimeout(() => cls(target, "bad", false), 700);
+  fb.className = "fb bad";
+  fb.textContent = `Ahí va ${target === "ar-df" ? "la Ciudad de Buenos Aires" : byId[target].nombre}. Probá en otro lugar.`;
+}
+function place(id){
+  cls(id, "slot", false); cls(id, "hover", false); cls(id, "ok", true);
+  setTimeout(() => cls(id, "ok", false), 600);
+  if (caps[id]) caps[id].classList.add("show");
+  const b = document.querySelector(`.piece[data-id="${id}"]`); if (b) b.remove();
+  PZ.sel = null; PZ.placed++; sfx.ok();
+  const p = byId[id];
+  $("pzFb").className = "fb ok";
+  $("pzFb").textContent = id === "ar-df" ? "¡Bien! La Ciudad de Buenos Aires." : `¡Bien! ${p.nombre}, capital ${p.capital}.`;
+  pzStatus();
+  if (PZ.placed === PZ.total) setTimeout(endPuzzle, 700);
+}
+function endPuzzle(){
+  document.body.classList.add("ended");
+  clearInterval(PZ.tick);
+  const ms = Date.now() - PZ.t0, E = Object.values(PZ.errs).reduce((a, b) => a + b, 0);
+  const st = E <= 2 ? 3 : E <= 6 ? 2 : E <= 12 ? 1 : 0;
+  $("stars").innerHTML = [0,1,2].map(i => `<span class="${i < st ? "" : "off"}">★</span>`).join("");
+  $("final").textContent = `¡Mapa armado en ${fmt(ms)}!`; $("endKindBox").hidden = true; sfx.win(st);
+  const key = "best-puzzle-" + ($("caba").checked ? "caba" : "sin"), prev = +(store.get(key) || 0);
+  if (!prev || ms < prev) store.set(key, ms);
+  $("bestTxt").textContent = (E === 0 ? "Sin errores. " : E === 1 ? "1 error. " : `${E} errores. `) +
+    (prev && ms < prev ? `¡Nuevo récord! Antes tardabas ${fmt(prev)}.` : `Mejor tiempo: ${fmt(prev ? Math.min(prev, ms) : ms)}`);
+  const ul = $("errs"); ul.innerHTML = "";
+  const errIds = Object.keys(PZ.errs);
+  errIds.forEach(id => { const p = byId[id], li = document.createElement("li");
+    li.innerHTML = `<b>${p.nombre}</b><span>${PZ.errs[id] === 1 ? "1 intento errado" : PZ.errs[id] + " intentos errados"}</span>`; ul.appendChild(li); });
+  $("errTitle").hidden = ul.hidden = !errIds.length;
+  $("review").hidden = true;
+  $("puzzle").hidden = true; $("end").hidden = false;
+}
+
+/* ---------- Lluvia ---------- */
+const RN = { kind: store.get("rnKind") === "cap" ? "cap" : "prov", running: false, paused: false, words: [], bag: [],
+  score: 0, lives: 3, streak: 0, hits: 0, level: 1, since: 0, last: 0, raf: 0, missed: [] };
+const layer = $("layer");
+function rnPool(){ return RN.kind === "cap" ? P.filter(p => p.id !== "ar-df") : P.filter(p => p.id !== "ar-df" || $("caba").checked); }
+function fallTime(){ return Math.max(4.5, 11 * Math.pow(0.88, RN.level - 1)); }
+function maxWords(){ return Math.min(3, 1 + Math.floor((RN.level - 1) / 2)); }
+function rnKindUI(){ document.querySelectorAll("#rnKind button, #endKind button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === RN.kind)); }
+function rnBestKey(){ return "best-rain-" + RN.kind; }
+function rnStatus(){
+  $("rnScore").textContent = `Puntos: ${RN.score}`; $("rnLevel").textContent = `Nivel ${RN.level}`; $("rnStreak").textContent = `Racha: ${RN.streak}`;
+  $("hudScore").textContent = RN.score; $("hudLives").textContent = "♥".repeat(RN.lives) + "♡".repeat(3 - RN.lives);
+}
+function rainReady(){
+  document.body.classList.remove("ended");
+  stopRain(); clearMap();
+  $("play").hidden = true; $("end").hidden = true; $("study").hidden = true; $("puzzle").hidden = true; $("rain").hidden = false;
+  Object.assign(RN, { score: 0, lives: 3, streak: 0, level: 1 }); rnStatus(); rnKindUI();
+  $("rnStart").hidden = false; $("hud").hidden = true;
+  document.querySelectorAll("#rnKind button").forEach(b => b.disabled = false);
+  $("rnFb").className = "fb"; $("rnFb").textContent = "";
+  $("rnBest").textContent = ""; renderBoard();
+}
+function startRain(){
+  rainReady();
+  Object.assign(RN, { running: true, paused: false, words: [], bag: [], hits: 0, since: 99, last: performance.now(), missed: [] });
+  $("rnStart").hidden = true; $("hud").hidden = false;
+  document.querySelectorAll("#rnKind button").forEach(b => b.disabled = true);
+  document.body.classList.add("raining");
+  if (matchMedia("(max-width:760px)").matches) document.querySelector(".map").scrollIntoView({ behavior: "smooth", block: "start" });
+  RN.raf = requestAnimationFrame(loop);
+  musicStart();
+}
+function stopRain(){
+  document.body.classList.remove("raining");
+  RN.running = false; cancelAnimationFrame(RN.raf); musicStop();
+  RN.words.forEach(w => w.el.remove()); RN.words = []; layer.innerHTML = "";
+  if ($("hud")) $("hud").hidden = true;
+}
+function pickWord(){
+  const falling = new Set(RN.words.map(w => w.id));
+  for (let t = 0; t < 60; t++) {
+    if (!RN.bag.length) RN.bag = shuffle(rnPool());
+    const p = RN.bag.pop(); if (!falling.has(p.id)) return p;
+  }
+  return null;
+}
+function spawn(){
+  const p = pickWord(); if (!p) return;
+  const el = document.createElement("div"); el.className = "drop";
+  el.textContent = RN.kind === "cap" ? p.capital : (p.id === "ar-df" ? "Ciudad de Bs. As." : p.nombre);
+  layer.appendChild(el);
+  const W = layer.clientWidth, w = el.offsetWidth;
+  const x = 8 + Math.random() * Math.max(0, W - w - 16);
+  const word = { id: p.id, el, x, y: 48, h: el.offsetHeight, v: layer.clientHeight / fallTime() };
+  el.style.transform = `translate(${x}px, ${word.y}px)`;
+  RN.words.push(word); RN.since = 0;
+}
+function loop(now){
+  if (!RN.running) return;
+  const dt = Math.min(0.05, (now - RN.last) / 1000); RN.last = now;
+  if (!RN.paused) {
+    RN.since += dt;
+    const gap = fallTime() / (maxWords() + 0.5);
+    if (RN.words.length < maxWords() && (RN.since >= gap || RN.words.length === 0 && RN.since > 0.6)) spawn();
+    const H = layer.clientHeight;
+    for (const w of RN.words.slice()) {
+      w.y += w.v * dt;
+      w.el.style.transform = `translate(${w.x}px, ${w.y}px)`;
+      w.el.classList.toggle("low", w.y > H * 0.72);
+      if (w.y + w.h >= H - 4) miss(w);
+      if (!RN.running) return;
+    }
+  }
+  RN.raf = requestAnimationFrame(loop);
+}
+function removeWord(w, c){
+  RN.words = RN.words.filter(x => x !== w);
+  w.el.classList.add(c); setTimeout(() => w.el.remove(), c === "pop" ? 320 : 1300);
+}
+function flash(id, c, ms){ cls(id, c, true); setTimeout(() => cls(id, c, false), ms); }
+function rainHit(id){
+  if (!RN.running || RN.paused) return;
+  const w = RN.words.find(x => x.id === id), p = byId[id], fb = $("rnFb");
+  if (w) {
+    removeWord(w, "pop");
+    RN.streak++; RN.hits++; sfx.ok(RN.streak - 1);
+    const f = Math.max(0, 1 - w.y / layer.clientHeight);
+    const pts = Math.round((10 + 40 * f) * (1 + 0.2 * (RN.level - 1))) + 2 * Math.min(RN.streak, 10);
+    RN.score += pts;
+    const pl = document.createElement("div"); pl.className = "plus"; pl.textContent = "+" + pts;
+    pl.style.transform = `translate(${w.x}px, ${w.y}px)`; layer.appendChild(pl); setTimeout(() => pl.remove(), 950);
+    flash(id, "ok", 500);
+    if (caps[id] && RN.kind === "cap") { caps[id].classList.add("show"); setTimeout(() => caps[id].classList.remove("show"), 1200); }
+    fb.className = "fb ok";
+    fb.textContent = RN.kind === "cap" ? `¡Bien! ${p.capital} está en ${p.nombre}.` : `¡Bien! ${p.id === "ar-df" ? "Ciudad de Buenos Aires" : p.nombre}.`;
+    if (RN.hits % 5 === 0) { RN.level++; fb.textContent += ` ¡Nivel ${RN.level}!`; setTimeout(sfx.level, 220); }
+  } else {
+    RN.streak = 0; RN.lives--; sfx.bad();
+    RN.words.forEach(x => { const q = byId[x.id]; if (!RN.missed.includes(q)) RN.missed.push(q); });
+    flash(id, "bad", 450);
+    fb.className = "fb bad";
+    fb.textContent = id === "ar-df" ? "Esa es la Ciudad de Buenos Aires." :
+      RN.kind === "cap" ? `Esa es ${p.nombre}, su capital es ${p.capital}.` : `Esa es ${p.nombre}.`;
+    fb.textContent += " Perdiste una vida.";
+    rnStatus(); checkOver(); return;
+  }
+  rnStatus();
+}
+function miss(w){
+  removeWord(w, "lost");
+  RN.lives--; RN.streak = 0; sfx.miss();
+  const p = byId[w.id];
+  if (!RN.missed.includes(p)) RN.missed.push(p);
+  flash(w.id, "reveal", 1500);
+  $("rnFb").className = "fb bad";
+  $("rnFb").textContent = RN.kind === "cap" ? `Se te pasó ${p.capital}: es la capital de ${p.nombre}.`
+                                            : `Se te pasó ${p.id === "ar-df" ? "la Ciudad de Buenos Aires" : p.nombre}. Mirá dónde está.`;
+  rnStatus();
+  checkOver();
+}
+function checkOver(){
+  if (RN.lives <= 0 && RN.running) { RN.running = false; cancelAnimationFrame(RN.raf); musicStop(); setTimeout(sfx.over, 450); setTimeout(rainOver, 1300); }
+}
+function rainOver(){
+  document.body.classList.add("ended");
+  stopRain();
+  const n = RN.hits, st = n >= 30 ? 3 : n >= 15 ? 2 : n >= 5 ? 1 : 0;
+  $("stars").innerHTML = [0,1,2].map(i => `<span class="${i < st ? "" : "off"}">★</span>`).join("");
+  $("final").textContent = `${RN.score} puntos`;
+  const list = loadBoard(), top = list.length ? list[0].score : 0;
+  $("bestTxt").textContent = `Atrapaste ${n} y llegaste al nivel ${RN.level}.` +
+    (RN.score > top && top ? ` ¡Superaste el récord de ${list[0].name}!` : "");
+  const qualifies = RN.score > 0 && (list.length < 5 || RN.score > list[list.length - 1].score);
+  $("saveBox").hidden = !qualifies;
+  RN.pending = qualifies ? { score: RN.score, level: RN.level, hits: n, date: new Date().toLocaleDateString("es-AR") } : null;
+  if (qualifies) { $("rnName").value = store.get("rnName") || ""; setTimeout(() => $("rnName").focus({ preventScroll: true }), 50); }
+  renderBoard();
+  const ul = $("errs"); ul.innerHTML = "";
+  RN.missed.forEach(p => { const li = document.createElement("li");
+    li.innerHTML = `<b>${p.nombre}</b><span>${p.id === "ar-df" ? "" : p.capital}</span>`; ul.appendChild(li); });
+  $("errTitle").hidden = $("review").hidden = ul.hidden = !RN.missed.length;
+  rnKindUI(); $("endKindBox").hidden = false; window.scrollTo(0, 0);
+  $("rain").hidden = true; $("end").hidden = false;
+}
+function togglePause(){
+  if (!RN.running) return;
+  RN.paused = !RN.paused; RN.last = performance.now();
+  layer.style.opacity = RN.paused ? ".25" : "";
+  if (RN.paused) musicStop(); else musicStart();
+}
+
+function boardKey(){ return "board-rain-" + RN.kind; }
+function loadBoard(){ try { const v = JSON.parse(store.get(boardKey()) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function renderBoard(mark){
+  $("boardTitle").textContent = "Mejores puntajes · " + (RN.kind === "cap" ? "Capitales" : "Provincias");
+  const ol = $("boardList"); ol.innerHTML = "";
+  const list = loadBoard();
+  if (!list.length) { const li = document.createElement("li"); li.style.gridTemplateColumns = "1fr";
+    li.textContent = "Todavía no hay puntajes. ¡Jugá la primera partida!"; li.classList.add("empty"); ol.appendChild(li); return; }
+  list.forEach((e, i) => {
+    const li = document.createElement("li"), nm = document.createElement("span"), pt = document.createElement("span"), sm = document.createElement("small");
+    nm.className = "nm"; nm.textContent = e.name; sm.textContent = `Nivel ${e.level} · ${e.date}`; nm.appendChild(sm);
+    pt.className = "pt"; pt.textContent = e.score;
+    li.append(nm, pt); if (i === mark) li.classList.add("me"); ol.appendChild(li);
+  });
+}
+$("saveForm").addEventListener("submit", e => {
+  e.preventDefault(); if (!RN.pending) return;
+  const name = ($("rnName").value.trim() || "Jugador").slice(0, 16);
+  store.set("rnName", name);
+  const entry = Object.assign({ name }, RN.pending); RN.pending = null;
+  const list = loadBoard(); list.push(entry); list.sort((a, b) => b.score - a.score);
+  const top = list.slice(0, 5); store.set(boardKey(), JSON.stringify(top));
+  $("saveBox").hidden = true; renderBoard(top.indexOf(entry));
+});
+
+/* ---------- Música de Jugar (chiptune sintetizado) ---------- */
+let musicOn = store.get("music") !== "0";
+$("music").checked = musicOn;
+const mtof = n => 440 * Math.pow(2, (n - 69) / 12);
+const MEL = [
+  72,0,76,79, 76,0,72,74,  76,0,72,69, 72,0,76,0,  77,0,76,74, 72,0,69,72,  74,0,79,77, 76,74,72,71,
+  72,0,76,79, 81,0,79,76,  76,0,72,69, 72,74,76,0, 77,0,81,79, 77,76,74,72, 71,72,74,76, 79,0,0,0];
+const BASS = [48,55,48,55, 45,52,45,52, 41,48,41,48, 43,50,43,50];
+const MUS = { timer: null, step: 0, next: 0, gain: null, noise: null };
+function mNote(f, t, dur, type, vol){
+  const a = AC, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(MUS.gain); o.start(t); o.stop(t + dur + 0.03);
+}
+function mHat(t){
+  if (!MUS.noise) { const b = AC.createBuffer(1, AC.sampleRate * 0.05, AC.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; MUS.noise = b; }
+  const src = AC.createBufferSource(), g = AC.createGain(), hp = AC.createBiquadFilter();
+  hp.type = "highpass"; hp.frequency.value = 6000; src.buffer = MUS.noise;
+  g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+  src.connect(hp).connect(g).connect(MUS.gain); src.start(t); src.stop(t + 0.05);
+}
+function musicTick(){
+  if (!AC || !MUS.gain) return;
+  while (MUS.next < AC.currentTime + 0.12) {
+    const s = MUS.step, t = MUS.next, bpm = Math.min(176, 116 + (RN.level - 1) * 8), e8 = 60 / bpm / 2;
+    if (MEL[s]) mNote(mtof(MEL[s]), t, e8 * 0.9, "square", 0.32);
+    if (s % 2 === 0) mNote(mtof(BASS[(s / 2) % 16]), t, e8 * 1.7, "triangle", 0.9);
+    if (s % 2 === 1) mHat(t);
+    MUS.next += e8; MUS.step = (s + 1) % MEL.length;
+  }
+}
+function musicStart(){
+  if (!musicOn || MUS.timer) return;
+  const a = actx(); if (!a) return;
+  MUS.gain = a.createGain(); MUS.gain.gain.value = 0.07; MUS.gain.connect(a.destination);
+  MUS.step = 0; MUS.next = a.currentTime + 0.06;
+  MUS.timer = setInterval(musicTick, 25); musicTick();
+}
+function musicStop(){
+  clearInterval(MUS.timer); MUS.timer = null;
+  const g = MUS.gain; MUS.gain = null;
+  if (g && AC) { try { g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.05); setTimeout(() => g.disconnect(), 300); } catch (e) {} }
+}
+$("music").onchange = () => {
+  musicOn = $("music").checked; store.set("music", musicOn ? "1" : "0");
+  if (!musicOn) musicStop(); else if (RN.running && !RN.paused) musicStart();
+};
+
+$("rnStart").onclick = startRain;
+$("endKind").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]"); if (!b) return;
+  RN.kind = b.dataset.k; store.set("rnKind", RN.kind); rnKindUI(); renderBoard();
+});
+$("rnKind").addEventListener("click", e => {
+  const k = e.target.dataset && e.target.dataset.k; if (!k || RN.running) return;
+  RN.kind = k; store.set("rnKind", k); rainReady();
+});
+document.addEventListener("visibilitychange", () => { if (!RN.running) return; if (document.hidden !== RN.paused) togglePause(); });
+
+
+const GROUPS = {
+  aprender: [["estudiar", "Explorar"], ["puzzle", "Rompecabezas"]],
+  practicar: [["ubicar", "Provincias"], ["capital", "Capitales"], ["elegir", "Elegir capital"]],
+  jugar: [["lluvia", "Lluvia de nombres"]]
+};
+const groupOf = m => Object.keys(GROUPS).find(g => GROUPS[g].some(x => x[0] === m));
+function renderNav(m){
+  const g = groupOf(m);
+  document.querySelectorAll("#modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === g));
+  const sub = $("varSeg"); sub.innerHTML = "";
+  $("variant").hidden = GROUPS[g].length < 2;
+  GROUPS[g].forEach(([id, label]) => {
+    const b = document.createElement("button"); b.textContent = label; b.dataset.m = id;
+    b.setAttribute("aria-pressed", id === m); sub.appendChild(b);
+  });
+  store.set("sub-" + g, m);
+}
+$("modes").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const g = b.dataset.g, last = store.get("sub-" + g);
+  setMode(GROUPS[g].some(x => x[0] === last) ? last : GROUPS[g][0][0]);
+});
+$("varSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setMode(b.dataset.m); });
+const pop = $("setPop"), gear = $("gear");
+function setPop(open){ pop.hidden = !open; gear.setAttribute("aria-expanded", open); }
+gear.onclick = e => { e.stopPropagation(); setPop(pop.hidden); };
+document.addEventListener("click", e => { if (!pop.hidden && !pop.contains(e.target)) setPop(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !pop.hidden) { setPop(false); gear.focus(); } });
+
+$("next").onclick = next;
+$("again").onclick = () => S.mode === "puzzle" ? startPuzzle() : S.mode === "lluvia" ? startRain() : start();
+$("review").onclick = () => {
+  if (S.mode === "lluvia") { const list = RN.missed.slice(); setMode(RN.kind === "cap" ? "capital" : "ubicar"); start(list); }
+  else start(S.errs.slice());
+};
+$("restart").onclick = () => setMode(S.mode);
+$("len").onchange = () => { store.set("len", $("len").value); if (S.mode !== "estudiar" && S.mode !== "puzzle") start(); };
+$("caba").onchange = () => { store.set("caba", $("caba").checked ? "1" : "0"); if (S.mode === "ubicar") start(); if (S.mode === "puzzle") startPuzzle(); if (S.mode === "lluvia") rainReady(); };
+
+setMode(["ubicar","capital","elegir","puzzle","lluvia","estudiar"].includes(store.get("mode")) ? store.get("mode") : "estudiar");
+</script>
+
+<p class="credits">Mapa: Highcharts Map Collection, basado en datos de Natural Earth.</p>
+</body>
+</html>
