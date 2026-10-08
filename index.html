@@ -32,6 +32,20 @@ img{max-width:100%}
   --bg:#0f1923; --panel:#172431; --sea:#132a3c; --ink:#e8eef4; --muted:#9db0c2; --line:#0f1923;
   --accent:#5aaee8; --accent-ink:#0b1620; --sun:#f5c04e; --ok:#3cc37a; --bad:#ef6a5a; --soft:#203243; --slot:#1c2d3d; --slotline:#3a556c;
   --noa:#8c5f42; --nea:#467c44; --cuyo:#715383; --pam:#857536; --pat:#3d6d8c; --land:#6b6450; color-scheme:dark}
+/* Elección del jugador en Ajustes (gana sobre el tema del sistema) */
+:root.t-light{
+  --bg:#eef4f9; --panel:#ffffff; --sea:#d6e8f4; --ink:#1d2b3a; --muted:#5b6d80; --line:#ffffff;
+  --accent:#2f86c9; --accent-ink:#ffffff; --sun:#f2b230;
+  --ok:#2fa865; --bad:#e0503f; --soft:#e3edf5; --slot:#f7fafc; --slotline:#b4c6d6;
+  --noa:#f2c3a0; --nea:#a9d99e; --cuyo:#d8bce6; --pam:#f4df96; --pat:#a8d0ea; --land:#efe3c2;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+ color-scheme:light}
+:root.t-dark{
+  --bg:#0f1923; --panel:#172431; --sea:#132a3c; --ink:#e8eef4; --muted:#9db0c2; --line:#0f1923;
+  --accent:#5aaee8; --accent-ink:#0b1620; --sun:#f5c04e; --ok:#3cc37a; --bad:#ef6a5a; --soft:#203243; --slot:#1c2d3d; --slotline:#3a556c;
+  --noa:#8c5f42; --nea:#467c44; --cuyo:#715383; --pam:#857536; --pat:#3d6d8c; --land:#6b6450; color-scheme:dark}
+
 
 html,body{height:100%}
 @media (pointer:coarse){html,body{touch-action:pan-x pan-y}}
@@ -186,6 +200,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 }
 </style>
 
+<script>try{document.documentElement.classList.add(localStorage.getItem("dark")==="0"?"t-light":"t-dark")}catch(e){document.documentElement.classList.add("t-dark")}</script>
 </head>
 <body>
 <div class="wrap">
@@ -202,6 +217,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
           </label>
           <label class="row2" for="caba">Incluir Ciudad de Buenos Aires <input type="checkbox" id="caba" checked></label>
           <label class="row2" for="regions">Mostrar regiones (NOA, NEA, Cuyo…) <input type="checkbox" id="regions" checked></label>
+          <label class="row2" for="darkmode">Modo oscuro <input type="checkbox" id="darkmode" checked></label>
           <label class="row2" for="music">Música en Jugar <input type="checkbox" id="music" checked></label>
           <p class="best">Las preguntas por vuelta se usan en Practicar. El parlante de al lado apaga todos los sonidos.</p>
         </div>
@@ -469,6 +485,14 @@ const sfx = {
   over(){ [392, 330, 262, 196].forEach((f, i) => tone(f, i * .16, .3, "triangle", .18)); }
 };
 function soundUI(){ $("snd").setAttribute("aria-pressed", soundOn); $("snd").title = soundOn ? "Sonido activado" : "Sonido apagado"; }
+let darkOn = store.get("dark") !== "0";
+function applyDark(){
+  const r = document.documentElement;
+  r.classList.toggle("t-dark", darkOn); r.classList.toggle("t-light", !darkOn);
+  $("darkmode").checked = darkOn;
+}
+$("darkmode").onchange = () => { darkOn = $("darkmode").checked; store.set("dark", darkOn ? "1" : "0"); applyDark(); };
+applyDark();
 let regionsOn = store.get("regions") !== "0";
 function applyRegions(){ document.body.classList.toggle("no-regions", !regionsOn); $("regions").checked = regionsOn; $("sReg").hidden = !regionsOn; }
 $("regions").onchange = () => { regionsOn = $("regions").checked; store.set("regions", regionsOn ? "1" : "0"); applyRegions(); };
