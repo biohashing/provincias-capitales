@@ -272,8 +272,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
         <p class="big" id="final"></p>
         <p class="best" id="bestTxt"></p>
         <div id="saveBox" hidden>
-          <p class="ask">¡Entraste en la tabla de récords! Escribí tu nombre:</p>
-          <form class="saveRow" id="saveForm"><input id="rnName" maxlength="16" autocomplete="off" placeholder="Tu nombre"><button class="primary" type="submit">Guardar</button></form>
+          <p class="ask">¡Entraste en la tabla de récords! Escribí tu apodo:</p>
+          <form class="saveRow" id="saveForm"><input id="rnName" maxlength="16" autocomplete="off" placeholder="Tu apodo"><button class="primary" type="submit" id="saveBtn">Guardar</button></form>
+          <p class="fb bad" id="saveErr"></p>
         </div>
         <p class="ask" id="errTitle">Para repasar:</p>
         <ul class="errs" id="errs"></ul>
@@ -293,7 +294,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
       <section class="card" id="board" hidden>
         <p class="title2" id="boardTitle">Mejores puntajes</p>
         <ol class="board" id="boardList"></ol>
-        <p class="best">Los récords se guardan en este dispositivo.</p>
+        <p class="best">Tabla de todos los que juegan. Usá un apodo, no tu nombre completo.</p>
       </section>
 
       <section class="card" id="settings">
@@ -930,10 +931,11 @@ function rainOver(){
   const n = RN.hits, st = n >= 30 ? 3 : n >= 15 ? 2 : n >= 5 ? 1 : 0;
   $("stars").innerHTML = [0,1,2].map(i => `<span class="${i < st ? "" : "off"}">★</span>`).join("");
   $("final").textContent = `${RN.score} puntos`;
-  const list = loadBoard(), top = list.length ? list[0].score : 0;
+  const list = loadBoard(), top = list.length ? list[0].puntos : 0;
   $("bestTxt").textContent = `Atrapaste ${n} y llegaste al nivel ${RN.level}.` +
-    (RN.score > top && top ? ` ¡Superaste el récord de ${list[0].name}!` : "");
-  const qualifies = RN.score > 0 && (list.length < 5 || RN.score > list[list.length - 1].score);
+    (RN.score > top && top ? ` ¡Superaste el récord de ${list[0].nombre}!` : "");
+  const qualifies = RN.score > 0 && n > 0 && (list.length < 10 || RN.score > list[list.length - 1].puntos);
+  $("saveErr").textContent = "";
   $("saveBox").hidden = !qualifies;
   RN.pending = qualifies ? { score: RN.score, level: RN.level, hits: n, date: new Date().toLocaleDateString("es-AR") } : null;
   if (qualifies) { $("rnName").value = store.get("rnName") || ""; setTimeout(() => $("rnName").focus({ preventScroll: true }), 50); }
@@ -952,30 +954,59 @@ function togglePause(){
   if (RN.paused) musicStop(); else musicStart();
 }
 
-function boardKey(){ return "board-rain-" + RN.kind; }
-function loadBoard(){ try { const v = JSON.parse(store.get(boardKey()) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-function renderBoard(mark){
-  $("boardTitle").textContent = "Mejores puntajes · " + (RN.kind === "cap" ? "Capitales" : "Provincias");
-  const ol = $("boardList"); ol.innerHTML = "";
-  const list = loadBoard();
-  if (!list.length) { const li = document.createElement("li"); li.style.gridTemplateColumns = "1fr";
-    li.textContent = "Todavía no hay puntajes. ¡Jugá la primera partida!"; li.classList.add("empty"); ol.appendChild(li); return; }
-  list.forEach((e, i) => {
+/* ---------- Tabla de récords global (Google Sheets vía Apps Script) ---------- */
+const API = "https://script.google.com/macros/s/AKfycbzNryOVqlOU1tiNhJdOdJC3RVWbZc1hO7jSbGdhdXf9Iktd_GoOJrWWqwZh427PMW8/exec";
+const GB = { prov: [], cap: [], t: { prov: 0, cap: 0 }, err: { prov: false, cap: false }, loading: { prov: false, cap: false }, mark: null };
+function loadBoard(){ return GB[RN.kind] || []; }
+function drawBoard(){
+  const kind = RN.kind, list = GB[kind], ol = $("boardList");
+  $("boardTitle").textContent = "Mejores puntajes · " + (kind === "cap" ? "Capitales" : "Provincias");
+  ol.innerHTML = "";
+  if (!list.length) {
+    const li = document.createElement("li"); li.style.gridTemplateColumns = "1fr"; li.classList.add("empty");
+    li.textContent = GB.loading[kind] ? "Cargando la tabla…" : GB.err[kind] ? "No se pudo cargar la tabla. Revisá la conexión." : "Todavía no hay puntajes. ¡Jugá la primera partida!";
+    ol.appendChild(li); return;
+  }
+  list.forEach(e => {
     const li = document.createElement("li"), nm = document.createElement("span"), pt = document.createElement("span"), sm = document.createElement("small");
-    nm.className = "nm"; nm.textContent = e.name; sm.textContent = `Nivel ${e.level} · ${e.date}`; nm.appendChild(sm);
-    pt.className = "pt"; pt.textContent = e.score;
-    li.append(nm, pt); if (i === mark) li.classList.add("me"); ol.appendChild(li);
+    nm.className = "nm"; nm.textContent = e.nombre; sm.textContent = `Nivel ${e.nivel} · ${e.fecha}`; nm.appendChild(sm);
+    pt.className = "pt"; pt.textContent = e.puntos;
+    li.append(nm, pt);
+    if (GB.mark && String(e.nombre).toLowerCase() === GB.mark.toLowerCase()) li.classList.add("me");
+    ol.appendChild(li);
   });
+}
+function fetchBoard(kind){
+  GB.loading[kind] = true;
+  return fetch(API + "?modo=" + kind)
+    .then(r => r.json())
+    .then(d => { if (d.ok) { GB[kind] = d.top || []; GB.t[kind] = Date.now(); GB.err[kind] = false; } else GB.err[kind] = true; })
+    .catch(() => { GB.err[kind] = true; })
+    .finally(() => { GB.loading[kind] = false; if (RN.kind === kind) drawBoard(); });
+}
+function renderBoard(){
+  drawBoard();
+  if (Date.now() - GB.t[RN.kind] > 30000 && !GB.loading[RN.kind]) fetchBoard(RN.kind);
 }
 $("saveForm").addEventListener("submit", e => {
   e.preventDefault(); if (!RN.pending) return;
-  const name = ($("rnName").value.trim() || "Jugador").slice(0, 16);
-  store.set("rnName", name);
-  const entry = Object.assign({ name }, RN.pending); RN.pending = null;
-  const list = loadBoard(); list.push(entry); list.sort((a, b) => b.score - a.score);
-  const top = list.slice(0, 5); store.set(boardKey(), JSON.stringify(top));
-  $("saveBox").hidden = true; renderBoard(top.indexOf(entry));
+  const nombre = $("rnName").value.trim().slice(0, 16), kind = RN.kind, p = RN.pending;
+  if (nombre.length < 2) { $("saveErr").textContent = "Escribí un apodo de 2 a 16 letras."; return; }
+  store.set("rnName", nombre);
+  $("saveBtn").disabled = true; $("saveErr").textContent = "Guardando…";
+  fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ nombre, puntos: p.score, modo: kind, nivel: p.level, aciertos: p.hits }) })
+    .then(r => r.json())
+    .then(d => {
+      if (d.top) { GB[kind] = d.top; GB.t[kind] = Date.now(); GB.err[kind] = false; }
+      if (d.ok) { RN.pending = null; GB.mark = nombre; $("saveBox").hidden = true; $("saveErr").textContent = ""; }
+      else $("saveErr").textContent = d.error || "No se pudo guardar. Probá de nuevo.";
+      if (RN.kind === kind) drawBoard();
+    })
+    .catch(() => { $("saveErr").textContent = "No se pudo guardar. Revisá la conexión y probá de nuevo."; })
+    .finally(() => { $("saveBtn").disabled = false; });
 });
+fetchBoard("prov"); fetchBoard("cap");
 
 /* ---------- Música de Jugar (chiptune sintetizado) ---------- */
 let musicOn = store.get("music") !== "0";
