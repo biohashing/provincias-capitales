@@ -311,6 +311,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
         <p class="title2" id="boardTitle">Mejores puntajes</p>
         <ol class="board" id="boardList"></ol>
         <p class="best">Tabla de todos los que juegan. Usá un apodo, no tu nombre completo.</p>
+        <p class="best" id="boardNote"></p>
       </section>
 
       <section class="card" id="settings">
@@ -993,6 +994,7 @@ function mergeTop(list, e){
 function loadBoard(){ return GB[RN.kind] || []; }
 function drawBoard(){
   const kind = RN.kind, list = GB[kind], ol = $("boardList");
+  $("boardNote").textContent = GB.err[kind] && list.length ? "No se pudo actualizar: se muestra la última tabla guardada." : "";
   $("boardTitle").textContent = "Mejores puntajes · " + (kind === "cap" ? "Capitales" : "Provincias");
   ol.innerHTML = "";
   if (!list.length) {
@@ -1019,7 +1021,7 @@ function fetchBoard(kind){
 }
 function renderBoard(){
   drawBoard();
-  if (Date.now() - GB.t[RN.kind] > 30000 && !GB.loading[RN.kind]) fetchBoard(RN.kind);
+  if (Date.now() - GB.t[RN.kind] > 10000 && !GB.loading[RN.kind]) fetchBoard(RN.kind);
 }
 let saving = false;
 $("saveForm").addEventListener("submit", e => {
@@ -1045,6 +1047,10 @@ $("saveForm").addEventListener("submit", e => {
     .finally(() => { saving = false; });
 });
 fetchBoard("prov"); fetchBoard("cap");
+// Mientras la tabla está a la vista se actualiza sola, y también al volver a la pestaña
+const boardVisible = () => S.mode === "lluvia" && !RN.running && !document.hidden;
+setInterval(() => { if (boardVisible() && !GB.loading[RN.kind]) fetchBoard(RN.kind); }, 20000);
+document.addEventListener("visibilitychange", () => { if (boardVisible()) fetchBoard(RN.kind); });
 
 /* ---------- Música de Jugar (chiptune sintetizado) ---------- */
 let musicOn = store.get("music") !== "0";
