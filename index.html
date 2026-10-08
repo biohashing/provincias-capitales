@@ -981,6 +981,15 @@ function togglePause(){
 /* ---------- Tabla de récords global (Google Sheets vía Apps Script) ---------- */
 const API = "https://script.google.com/macros/s/AKfycbzNryOVqlOU1tiNhJdOdJC3RVWbZc1hO7jSbGdhdXf9Iktd_GoOJrWWqwZh427PMW8/exec";
 const GB = { prov: [], cap: [], t: { prov: 0, cap: 0 }, err: { prov: false, cap: false }, loading: { prov: false, cap: false }, mark: null };
+// La última tabla vista queda guardada en el dispositivo: se muestra al instante y después se actualiza
+["prov", "cap"].forEach(k => { try { const v = JSON.parse(store.get("gb_" + k) || "[]"); if (Array.isArray(v)) GB[k] = v; } catch (e) {} });
+function keepBoard(kind){ store.set("gb_" + kind, JSON.stringify(GB[kind])); }
+const normName = n => String(n).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9ñ]/g, "");
+function mergeTop(list, e){
+  const out = list.slice(), i = out.findIndex(x => normName(x.nombre) === normName(e.nombre));
+  if (i >= 0) { if (e.puntos > out[i].puntos) out[i] = e; } else out.push(e);
+  return out.sort((a, b) => b.puntos - a.puntos).slice(0, 10);
+}
 function loadBoard(){ return GB[RN.kind] || []; }
 function drawBoard(){
   const kind = RN.kind, list = GB[kind], ol = $("boardList");
@@ -1004,7 +1013,7 @@ function fetchBoard(kind){
   GB.loading[kind] = true;
   return fetch(API + "?modo=" + kind)
     .then(r => r.json())
-    .then(d => { if (d.ok) { GB[kind] = d.top || []; GB.t[kind] = Date.now(); GB.err[kind] = false; } else GB.err[kind] = true; })
+    .then(d => { if (d.ok) { GB[kind] = d.top || []; GB.t[kind] = Date.now(); GB.err[kind] = false; keepBoard(kind); } else GB.err[kind] = true; })
     .catch(() => { GB.err[kind] = true; })
     .finally(() => { GB.loading[kind] = false; if (RN.kind === kind) drawBoard(); });
 }
@@ -1012,23 +1021,28 @@ function renderBoard(){
   drawBoard();
   if (Date.now() - GB.t[RN.kind] > 30000 && !GB.loading[RN.kind]) fetchBoard(RN.kind);
 }
+let saving = false;
 $("saveForm").addEventListener("submit", e => {
-  e.preventDefault(); if (!RN.pending) return;
+  e.preventDefault(); if (!RN.pending || saving) return;
   const nombre = $("rnName").value.trim().slice(0, 16), kind = RN.kind, p = RN.pending;
   if (nombre.length < 2) { $("saveErr").textContent = "Escribí un apodo de 2 a 16 letras."; return; }
   store.set("rnName", nombre);
-  $("saveBtn").disabled = true; $("saveErr").textContent = "Guardando…";
+  // Se muestra en la tabla al instante; si el servidor lo rechaza, se deshace
+  const prev = GB[kind];
+  GB[kind] = mergeTop(prev, { nombre, puntos: p.score, nivel: p.level, fecha: new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }) });
+  GB.mark = nombre; saving = true;
+  $("saveBox").hidden = true; $("saveErr").textContent = "";
+  if (RN.kind === kind) drawBoard();
+  const undo = msg => { GB[kind] = prev; GB.mark = null; $("saveBox").hidden = false; $("saveErr").textContent = msg; if (RN.kind === kind) drawBoard(); };
   fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ nombre, puntos: p.score, modo: kind, nivel: p.level, aciertos: p.hits }) })
     .then(r => r.json())
     .then(d => {
-      if (d.top) { GB[kind] = d.top; GB.t[kind] = Date.now(); GB.err[kind] = false; }
-      if (d.ok) { RN.pending = null; GB.mark = nombre; $("saveBox").hidden = true; $("saveErr").textContent = ""; }
-      else $("saveErr").textContent = d.error || "No se pudo guardar. Probá de nuevo.";
-      if (RN.kind === kind) drawBoard();
+      if (d.ok) { RN.pending = null; GB[kind] = d.top || GB[kind]; GB.t[kind] = Date.now(); keepBoard(kind); if (RN.kind === kind) drawBoard(); }
+      else { if (d.top) GB[kind] = d.top; undo(d.error || "No se pudo guardar. Probá de nuevo."); if (d.top) { GB[kind] = d.top; drawBoard(); } }
     })
-    .catch(() => { $("saveErr").textContent = "No se pudo guardar. Revisá la conexión y probá de nuevo."; })
-    .finally(() => { $("saveBtn").disabled = false; });
+    .catch(() => undo("No se pudo guardar. Revisá la conexión y probá de nuevo."))
+    .finally(() => { saving = false; });
 });
 fetchBoard("prov"); fetchBoard("cap");
 
