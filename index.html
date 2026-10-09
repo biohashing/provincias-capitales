@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Juego para aprender las provincias y capitales de la República Argentina en el mapa.">
-<link rel="icon" href="favicon.svg?v=4" type="image/svg+xml">
-<link rel="icon" href="favicon-32.png?v=4" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon.svg?v=5" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png?v=5" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -226,7 +226,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
           <label class="row2" for="boardMode">Tabla de récords
             <select id="boardMode"><option value="mejor">Mejor de cada jugador</option><option value="todas">Todas las partidas</option></select>
           </label>
-          <p class="best" style="font-size:.72rem;opacity:.75">Mapa basado en datos de Natural Earth (Highcharts Map Collection). Versión V4 · 09/10/2026</p>
+          <p class="best" style="font-size:.72rem;opacity:.75">Mapa basado en datos de Natural Earth (Highcharts Map Collection). Versión V5 · 09/10/2026</p>
         </div>
       </div>
     </div>
@@ -297,8 +297,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
         <div id="saveBox" hidden>
           <p class="ask">¡Entraste en la tabla de récords! Escribí tu apodo:</p>
           <form class="saveRow" id="saveForm"><input id="rnName" maxlength="16" autocomplete="off" placeholder="Tu apodo"><button class="primary" type="submit" id="saveBtn">Guardar</button></form>
-          <p class="fb bad" id="saveErr"></p>
         </div>
+        <p class="fb bad" id="saveErr"></p>
         <p class="ask" id="errTitle">Para repasar:</p>
         <ul class="errs" id="errs"></ul>
         <div class="endKind" id="endKindBox" hidden>
@@ -990,8 +990,9 @@ function rainOver(){
   const list = loadBoard(), top = list.length ? list[0].puntos : 0;
   $("bestTxt").textContent = `Atrapaste ${n} y llegaste al nivel ${RN.level}.` +
     (RN.score > top && top ? ` ¡Superaste el récord de ${list[0].nombre}!` : "");
-  const qualifies = RN.score > 0 && n > 0 && (list.length < 10 || RN.score > list[list.length - 1].puntos);
-  $("saveErr").textContent = "";
+  const all = GB.data[RN.kind].todas.length ? GB.data[RN.kind].todas : list;
+  const qualifies = RN.score > 0 && n > 0 && (all.length < 10 || RN.score > all[all.length - 1].puntos);
+  $("saveErr").textContent = ""; $("saveErr").className = "fb bad";
   $("saveBox").hidden = !qualifies;
   RN.pending = qualifies ? { score: RN.score, level: RN.level, hits: n, date: new Date().toLocaleDateString("es-AR") } : null;
   if (qualifies) { $("rnName").value = store.get("rnName") || ""; setTimeout(() => $("rnName").focus({ preventScroll: true }), 50); }
@@ -1075,14 +1076,21 @@ $("saveForm").addEventListener("submit", e => {
   const ent = { nombre, puntos: p.score, nivel: p.level, fecha: new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }) };
   GB.data[kind] = { mejor: mergeTop(prev.mejor, ent), todas: prev.todas.concat([ent]).sort(byPts).slice(0, 10) };
   GB.mark = { nombre, puntos: p.score }; saving = true;
-  $("saveBox").hidden = true; $("saveErr").textContent = "";
+  $("saveBox").hidden = true; $("saveErr").textContent = "Guardando…"; $("saveErr").className = "fb";
   if (RN.kind === kind) drawBoard();
-  const undo = msg => { GB.data[kind] = prev; GB.mark = null; $("saveBox").hidden = false; $("saveErr").textContent = msg; if (RN.kind === kind) drawBoard(); };
+  const undo = msg => { GB.data[kind] = prev; GB.mark = null; $("saveBox").hidden = false; $("saveErr").className = "fb bad"; $("saveErr").textContent = msg; if (RN.kind === kind) drawBoard(); };
   fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ nombre, puntos: p.score, modo: kind, nivel: p.level, aciertos: p.hits }) })
     .then(r => r.json())
     .then(d => {
-      if (d.ok) { RN.pending = null; GB.data[kind] = fromServer(d); GB.t[kind] = Date.now(); keepBoard(kind); if (RN.kind === kind) drawBoard(); }
+      if (d.ok) {
+        RN.pending = null; GB.data[kind] = fromServer(d); GB.t[kind] = Date.now(); keepBoard(kind); if (RN.kind === kind) drawBoard();
+        // Avisa que se guardó; en la tabla "mejor" puede no verse si el jugador ya tenía un puntaje más alto
+        const best = GB.data[kind].mejor.find(x => normName(x.nombre) === normName(nombre));
+        $("saveErr").className = "fb ok";
+        $("saveErr").textContent = VIEW === "mejor" && best && best.puntos > p.score
+          ? `¡Partida guardada! En esta tabla figura tu mejor puntaje (${best.puntos}).` : "¡Partida guardada!";
+      }
       else { undo(d.error || "No se pudo guardar. Probá de nuevo."); if (d.mejor || d.top) { GB.data[kind] = fromServer(d); drawBoard(); } }
     })
     .catch(() => undo("No se pudo guardar. Revisá la conexión y probá de nuevo."))
